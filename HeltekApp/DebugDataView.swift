@@ -36,7 +36,7 @@ struct DebugDataView: View {
             List(semuaProgress) { progress in
                 VStack(alignment: .leading) {
                     Text("Tanggal: \(progress.date.formatted(date: .abbreviated, time: .omitted))")
-                    Text("Isi Baterai (Selesai): \(progress.completedStretches) kali"
+                    Text("Isi Baterai (Selesai): \(progress.completedStretches) kali")
                         .font(.headline)
                         .foregroundColor(progress.completedStretches > 0 ? .green : .red)
                     Text("Target tercapai: \(progress.isGoalMet ? "Ya" : "Belum")")
@@ -58,11 +58,12 @@ struct DebugDataView: View {
             }
         } else {
             // kalau hari ini belum ada catatan sama sekali, buat catatan baru!
-            let catatanBaru = DailyProgress(date: Date(), lasUpdated: Date())
+            let catatanBaru = DailyProgress(date: Date(), lastUpdated: Date())
             catatanBaru.completedStretches = 1 // langsung hitung 1
             
             // simpan ke SwiftData
-            context.insert(catatanBaru)
+            data.insert(catatanBaru)
         }
     }
 }
+
