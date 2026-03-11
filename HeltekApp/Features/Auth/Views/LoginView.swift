@@ -2,47 +2,36 @@
 //  LoginView.swift
 //  HeltekApp
 //
-//  Created by Fakhri Djamaris on 11/03/26.
-//
 
 import SwiftUI
-import AuthenticationServices // Framework bawaan Apple untuk "Sign in with Apple"
+import AuthenticationServices
 
 struct LoginView: View {
     
-    // State untuk isi form — seperti useState di React
     @State private var email = ""
     @State private var password = ""
     @State private var isPasswordVisible = false
     @State private var showRegister = false
     
-    // AppStorage untuk simpan status login
-    // Saat ini = true, HeltekAppApp.swift akan auto-redirect ke MainTabView
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                
-                // MARK: - Gambar Header
-                ZStack {
-                    RoundedRectangle(cornerRadius: 0)
-                        .fill(Color(hex: "FFF0E8"))
-                        .frame(height: 220)
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 0) {
                     
-                    Image(systemName: "LoginFrame")
+                    // MARK: - Gambar Header (rounded card peach)
+                    Image("LoginFrame")
                         .resizable()
-                        .scaledToFit()
-                        .foregroundColor(Color.themePrimary)
-                        .frame(height: 120)
-                }
-                
-                // MARK: - Form Login
-                VStack(alignment: .leading, spacing: 24) {
+                        .scaledToFill()
+                        .frame(height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
                     
-                    // Judul
-                    VStack(alignment: .center, spacing: 8) {
+                    // MARK: - Teks Welcome
+                    VStack(spacing: 10) {
                         Text("Welcome")
                             .font(ThemeFont.title)
                             .foregroundColor(Color.textPrimary)
@@ -51,200 +40,214 @@ struct LoginView: View {
                             .font(ThemeFont.body)
                             .foregroundColor(Color.textSecondary)
                             .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(.top, 32)
+                    .padding(.bottom, 28)
                     
-                    // Field Email
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(ThemeFont.caption)
-                            .foregroundColor(Color.textSecondary)
+                    // MARK: - Form
+                    VStack(alignment: .leading, spacing: 20) {
                         
-                        HStack {
-                            Image(systemName: "envelope")
-                                .foregroundColor(Color.textSecondary)
+                        // Field Email
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Email")
+                                .font(ThemeFont.bodyBold)
+                                .foregroundColor(Color.textPrimary)
                             
-                            // TextField = <input type="text"> versi SwiftUI
-                            TextField("yourname@example.com", text: $email)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .font(ThemeFont.body)
+                            HStack(spacing: 12) {
+                                Image(systemName: "envelope")
+                                    .foregroundColor(Color.textSecondary)
+                                    .frame(width: 20)
+                                
+                                TextField("yourname@example.com", text: $email)
+                                    .keyboardType(.emailAddress)
+                                    .autocapitalization(.none)
+                                    .font(ThemeFont.body)
+                                    .foregroundColor(Color.textPrimary)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
                         }
-                        .padding(14)
-                        .background(Color.themeBackground)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                        )
-                    }
-                    
-                    // Field Password
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Password")
+                        
+                        // Field Password
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Label + Forgot Password dalam satu baris
+                            HStack {
+                                Text("Password")
+                                    .font(ThemeFont.bodyBold)
+                                    .foregroundColor(Color.textPrimary)
+                                
+                                Spacer()
+                                
+                                Button("Forgot Password?") {
+                                    // TODO: Reset password
+                                }
+                                .font(ThemeFont.caption)
+                                .foregroundColor(Color.themePrimary)
+                            }
+                            
+                            HStack(spacing: 12) {
+                                Image(systemName: "lock")
+                                    .foregroundColor(Color.textSecondary)
+                                    .frame(width: 20)
+                                
+                                if isPasswordVisible {
+                                    TextField("••••••••", text: $password)
+                                        .font(ThemeFont.body)
+                                } else {
+                                    SecureField("••••••••", text: $password)
+                                        .font(ThemeFont.body)
+                                }
+                                
+                                Button(action: { isPasswordVisible.toggle() }) {
+                                    Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
+                                        .foregroundColor(Color.textSecondary)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                        
+                        // MARK: - Tombol Login
+                        Button(action: { handleLogin() }) {
+                            HStack(spacing: 8) {
+                                Text("Login")
+                                    .font(ThemeFont.button)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                            .background(Color.themePrimary)
+                            .cornerRadius(ThemeStyle.cornerRadius)
+                        }
+                        .padding(.top, 4)
+                        
+                        HStack(spacing: 12) {
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(height: 1)
+                            
+                            Text("Or continue with")
                                 .font(ThemeFont.caption)
                                 .foregroundColor(Color.textSecondary)
+                                .fixedSize() // supaya teks tidak wrap
                             
-                            Spacer()
-                            
-                            // Forgot Password link
-                            Button("Forgot Password?") {
-                                // TODO: Implementasi reset password
-                            }
-                            .font(ThemeFont.caption)
-                            .foregroundColor(Color.themePrimary)
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(height: 1)
                         }
                         
-                        HStack {
-                            Image(systemName: "lock")
-                                .foregroundColor(Color.textSecondary)
-                            
-                            // Kondisional: tampilkan teks biasa atau tersembunyi
-                            if isPasswordVisible {
-                                TextField("••••••••", text: $password)
-                                    .font(ThemeFont.body)
-                            } else {
-                                // SecureField = <input type="password">
-                                SecureField("••••••••", text: $password)
-                                    .font(ThemeFont.body)
-                            }
-                            
-                            // Toggle tampilkan/sembunyikan password
-                            Button(action: {
-                                isPasswordVisible.toggle()
-                            }) {
-                                Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
-                                    .foregroundColor(Color.textSecondary)
-                            }
-                        }
-                        .padding(14)
-                        .background(Color.themeBackground)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                        )
-                    }
-                    
-                    // Tombol Login Utama
-                    Button(action: {
-                        handleLogin()
-                    }) {
-                        HStack {
-                            Text("Login")
-                                .font(ThemeFont.button)
-                            Image(systemName: "arrow.right.square")
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(Color.themePrimary)
-                        .cornerRadius(ThemeStyle.cornerRadius)
-                    }
-                    
-                    // Divider "Or continue with"
-                    HStack {
-                        Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
-                        Text("Or continue with")
-                            .font(ThemeFont.caption)
-                            .foregroundColor(Color.textSecondary)
-                            .fixedSize()
-                        Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
-                    }
-                    
-                    // MARK: - Tombol Social Login
-                    VStack(spacing: 12) {
-                        
-                        // Sign in with Apple (framework resmi dari Apple)
+                        // MARK: - Tombol Continue with Apple
                         SignInWithAppleButton(.signIn) { request in
-                            // Kita minta data nama dan email dari Apple
                             request.requestedScopes = [.fullName, .email]
                         } onCompletion: { result in
                             handleAppleSignIn(result: result)
                         }
-                        .signInWithAppleButtonStyle(.black)
-                        .frame(height: 50)
+                        .signInWithAppleButtonStyle(.white)
+                        .frame(height: 54)
                         .cornerRadius(ThemeStyle.cornerRadius)
+                        .overlay(
+                            // Border abu-abu tipis di luar tombol Apple
+                            RoundedRectangle(cornerRadius: ThemeStyle.cornerRadius)
+                                .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                        )
                         
-                    }
-                    
-                    // Link Sign Up
-                    HStack {
-                        Spacer()
-                        Text("Don't have an account?")
+                        // MARK: - Link Sign Up
+                        HStack(spacing: 4) {
+                            Spacer()
+                            Text("Don't have an account?")
+                                .font(ThemeFont.caption)
+                                .foregroundColor(Color.textSecondary)
+                            
+                            Button("Sign Up") {
+                                showRegister = true
+                            }
                             .font(ThemeFont.caption)
-                            .foregroundColor(Color.textSecondary)
-                        
-                        Button("Sign Up") {
-                            showRegister = true
+                            .foregroundColor(Color.themePrimary)
+                            Spacer()
                         }
-                        .font(ThemeFont.caption)
-                        .foregroundColor(Color.themePrimary)
-                        Spacer()
+                        .padding(.top, 4)
+                        .padding(.bottom, 40)
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 32)
-                    .padding(.bottom, 40)
                 }
             }
-        }
-        .background(Color.white.ignoresSafeArea())
-        // Tombol back untuk ke onboarding (opsional, untuk testing)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    // Kembali ke onboarding (reset AppStorage)
-                    hasSeenOnboarding = false
-                }) {
-                    Image(systemName: "arrow.left")
+            .background(Color.themeBackground.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // Tombol back kiri atas
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        // Kembali ke onboarding
+                        hasSeenOnboarding = false
+                    }) {
+                        ZStack {
+                            // Lingkaran background abu-abu seperti di desain
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 36, height: 36)
+                                .shadow(
+                                    color: Color.black.opacity(0.08),
+                                    radius: 4, x: 0, y: 2
+                                )
+                            
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(Color.textPrimary)
+                        }
+                    }
+                }
+                
+                // Judul "Login" di tengah
+                ToolbarItem(placement: .principal) {
+                    Text("Login")
+                        .font(ThemeFont.bodyBold)
                         .foregroundColor(Color.textPrimary)
                 }
             }
-        }
-        .sheet(isPresented: $showRegister) {
-            RegisterView()
+            .sheet(isPresented: $showRegister) {
+                RegisterView()
+            }
         }
     }
     
-    // MARK: - Fungsi Login Biasa (Email/Password)
-    // Untuk MVP: kita skip validasi server, langsung set isLoggedIn = true
-    // Ini seperti localStorage.setItem('isLoggedIn', true)
+    // MARK: - Fungsi Login
     private func handleLogin() {
         guard !email.isEmpty, !password.isEmpty else { return }
         
-        // TODO: Ganti dengan validasi CloudKit nanti di Fitur 2
-        // Untuk sekarang, langsung masuk aja
+        print("✅ Login ditekan — set isLoggedIn = true")
+        // TODO: Validasi ke CloudKit di Fitur 2
         isLoggedIn = true
     }
     
-    // MARK: - Fungsi Sign In with Apple
+    // MARK: - Fungsi Apple Sign In
     private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            // Kalau berhasil, ambil credential dari Apple
             if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                
-                // Simpan userIdentifier — ini ID unik dari Apple, seperti user ID di database
                 let userID = credential.user
                 UserDefaults.standard.set(userID, forKey: "appleUserID")
-                
-                print("✅ Sign in with Apple berhasil! User ID: \(userID)")
-                
-                // Tandai sudah login → app otomatis pindah ke MainTabView
+                print("✅ Apple Sign In berhasil! ID: \(userID)")
                 isLoggedIn = true
             }
-            
         case .failure(let error):
-            // Gagal login — tampilkan error
-            print("❌ Sign in with Apple gagal: \(error.localizedDescription)")
+            print("❌ Apple Sign In gagal: \(error.localizedDescription)")
         }
     }
 }
 
-// MARK: - Preview
 #Preview {
-    NavigationView {
-        LoginView()
-    }
+    LoginView()
 }
