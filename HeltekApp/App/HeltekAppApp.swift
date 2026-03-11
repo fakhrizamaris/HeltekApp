@@ -6,15 +6,14 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct HeltekAppApp: App {
 
+
     var body: some Scene {
         WindowGroup {
-            DebugDataView()
+            MainTabView()
         }
-        .modelContainer(DailyProgress.self)
     }
 }
