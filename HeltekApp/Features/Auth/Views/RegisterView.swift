@@ -17,6 +17,8 @@ struct RegisterView: View {
     @State private var isPasswordVisible = false
     @State private var isConfirmPasswordVisible = false
     
+    @StateObject private var authVM = AuthViewModel()
+    
     // State untuk error message
     @State private var errorMessage = ""
     @State private var showError = false
@@ -154,8 +156,8 @@ struct RegisterView: View {
                         }
                         
                         // MARK: - Error Message General
-                        if showError {
-                            Text(errorMessage)
+                        if authVM.showError || showError {
+                            Text(authVM.showError ? authVM.errorMessage : errorMessage)
                                 .font(ThemeFont.caption)
                                 .foregroundColor(Color.alertDestructive)
                                 .padding(12)
@@ -165,19 +167,30 @@ struct RegisterView: View {
                         }
                         
                         // MARK: - Tombol Register
-                        Button(action: { handleRegister() }) {
-                            Text("Create Account")
-                                .font(ThemeFont.button)
-                                .foregroundColor(.white)
+                        Button(action: {
+                            Task {
+                                await authVM.registerWithEmail(name: fullName, email: email, password: password)
+                            }
+                        }) {
+                            HStack {
+                                if authVM.isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                } else {
+                                    Text("Create Account")
+                                        .font(ThemeFont.button)
+                                        .foregroundColor(.white)
+                                }
+                            }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 18)
                                 .background(
                                     // Tombol abu-abu kalau form belum lengkap
-                                    formIsValid ? Color.themePrimary : Color.gray.opacity(0.4)
+                                    (formIsValid && !authVM.isLoading) ? Color.themePrimary : Color.gray.opacity(0.4)
                                 )
                                 .cornerRadius(ThemeStyle.cornerRadius)
                         }
-                        .disabled(!formIsValid) // Nonaktifkan tombol kalau form belum valid
+                        .disabled(!formIsValid || authVM.isLoading) // Nonaktifkan tombol kalau form belum valid
 
                         // Link kembali ke Login
                         HStack {
@@ -234,16 +247,17 @@ struct RegisterView: View {
     
     // MARK: - Fungsi Register
     private func handleRegister() {
-        guard formIsValid else { return }
+        // dummy digantikan dengan pemanggilan Task di button action
+        // guard formIsValid else { return }
         
-        // Simpan nama dan email user ke AppStorage supaya bisa ditampilkan di HomeView
-        UserDefaults.standard.set(fullName, forKey: "userName")
-        UserDefaults.standard.set(email, forKey: "userEmail")
+        // // Simpan nama dan email user ke AppStorage supaya bisa ditampilkan di HomeView
+        // UserDefaults.standard.set(fullName, forKey: "userName")
+        // UserDefaults.standard.set(email, forKey: "userEmail")
         
-        print("✅ Registrasi simulasi berhasil! Masuk sebagai: \(fullName) (\(email))")
+        // print("✅ Registrasi simulasi berhasil! Masuk sebagai: \(fullName) (\(email))")
         
-        // Langsung tandai sudah login, otomatis meluncur ke MainTabView
-        isLoggedIn = true
+        // // Langsung tandai sudah login, otomatis meluncur ke MainTabView
+        // isLoggedIn = true
     }
 }
 

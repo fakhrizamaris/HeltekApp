@@ -12,6 +12,8 @@ struct LoginView: View {
     @State private var isPasswordVisible = false
     @State private var showRegister = false
     
+    @StateObject private var authVM = AuthViewModel()
+    
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("userEmail") private var userEmail = ""
@@ -131,21 +133,39 @@ struct LoginView: View {
                             }
                             
                             // Tombol Login
-                            Button(action: { handleLogin() }) {
+                            Button(action: {
+                                Task {
+                                    await authVM.loginWithEmail(email: email, password: password)
+                                }
+                            }) {
                                 HStack(spacing: 8) {
-                                    Text("Login")
-                                        .font(ThemeFont.button)
-                                        .foregroundColor(.white)
+                                    if authVM.isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Text("Login")
+                                            .font(ThemeFont.button)
+                                            .foregroundColor(.white)
+                                    }
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 18)
                                 .background(
-                                    (email.isEmpty || password.isEmpty) ? Color.gray.opacity(0.5) : Color.themePrimary
+                                    (email.isEmpty || password.isEmpty || authVM.isLoading) ? Color.gray.opacity(0.5) : Color.themePrimary
                                 )
                                 .cornerRadius(12) // Menggunakan angka agar aman jika ThemeStyle belum dideklarasi
                             }
-                            .disabled(email.isEmpty || password.isEmpty)
+                            .disabled(email.isEmpty || password.isEmpty || authVM.isLoading)
                             .padding(.top, 4)
+                            
+                            // Pesan Error jika gagal Login
+                            if authVM.showError {
+                                Text(authVM.errorMessage)
+                                    .font(ThemeFont.caption)
+                                    .foregroundColor(.red)
+                                    .multilineTextAlignment(.leading)
+                                    .padding(.horizontal)
+                            }
                             
                             // Link ke Register
                             HStack(spacing: 4) {
@@ -178,7 +198,7 @@ struct LoginView: View {
                         .background(Circle().fill(Color.white.opacity(0.8)))
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
-                .padding(.top, 20) // Sesuaikan dengan tinggi safe area / notch / dynamic island
+                .padding(.top, 6) // Sesuaikan dengan tinggi safe area / notch / dynamic island
                 .padding(.leading, 16)
             }
             .navigationBarHidden(true) // Sembunyikan navigasi bawaan yang bikin ruang putih
@@ -189,9 +209,10 @@ struct LoginView: View {
     }
     
     private func handleLogin() {
-        guard !email.isEmpty, !password.isEmpty else { return }
-        userEmail = email
-        print("✅ Login simulasi berhasil! Masuk sebagai: \(email)")
-        isLoggedIn = true
+        // Method lama yang hanya simulasi
+        // guard !email.isEmpty, !password.isEmpty else { return }
+        // userEmail = email
+        // print("✅ Login simulasi berhasil! Masuk sebagai: \(email)")
+        // isLoggedIn = true
     }
 }
