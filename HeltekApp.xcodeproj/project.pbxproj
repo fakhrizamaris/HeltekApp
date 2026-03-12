@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4183A67F2F61731000E26010 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A67E2F61731000E26010 /* FirebaseAuth */; };
+		4183A6812F61731000E26010 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A6802F61731000E26010 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		41CD12132F603FBB00E91BC9 /* HeltekApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeltekApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4183A67F2F61731000E26010 /* FirebaseAuth in Frameworks */,
+				4183A6812F61731000E26010 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,8 @@
 			);
 			name = HeltekApp;
 			packageProductDependencies = (
+				4183A67E2F61731000E26010 /* FirebaseAuth */,
+				4183A6802F61731000E26010 /* FirebaseFirestore */,
 			);
 			productName = HeltekApp;
 			productReference = 41CD12132F603FBB00E91BC9 /* HeltekApp.app */;
@@ -107,6 +116,9 @@
 			);
 			mainGroup = 41CD120A2F603FBB00E91BC9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 41CD12142F603FBB00E91BC9 /* Products */;
 			projectDirPath = "";
@@ -347,6 +359,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4183A67E2F61731000E26010 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		4183A6802F61731000E26010 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 41CD120B2F603FBB00E91BC9 /* Project object */;
 }
