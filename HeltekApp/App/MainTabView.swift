@@ -29,10 +29,6 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Leaderboard", systemImage: "trophy")
                 }
-            DebugView()
-                .tabItem {
-                    Label("Debug", systemImage: "wrench.fill")
-                }
         }
         .tint(Color.themePrimary)
     }
