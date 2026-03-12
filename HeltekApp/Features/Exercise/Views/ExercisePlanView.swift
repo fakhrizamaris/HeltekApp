@@ -31,11 +31,6 @@ struct ExercisePlanView: View {
             .navigationDestination(for: ExercisePlan.self) { plan in
                 ExercisePlanDetailView(plan: plan)
             }
-    var body: some View {
-        VStack {
-            Text("Ini Exercise Plan")
-                .font(.largeTitle)
-                .fontWeight(.bold)
         }
     }
 }
@@ -116,7 +111,6 @@ private struct PlanMetaChip: View {
         .clipShape(Capsule())
     }
 }
-
 private struct CardShadow: ViewModifier {
     func body(content: Content) -> some View {
         ThemeStyle.cardShadow(for: content)
@@ -126,3 +120,4 @@ private struct CardShadow: ViewModifier {
 #Preview {
     ExercisePlanView()
 }
+
