@@ -133,12 +133,14 @@ struct OnboardingView: View {
                 }) {
                     Text("Skip")
                         .font(ThemeFont.bodyBold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 6)
+                        .foregroundColor(Color.textPrimary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.gray.opacity(0.15))
+                        .clipShape(Capsule())
                 }
-                .padding(.top, 6)
-                .padding(.trailing, 16)
+                .padding(.top, 16)
+                .padding(.trailing, 24)
             }
         }
         // Auto-advance splash screen setelah 2 detik

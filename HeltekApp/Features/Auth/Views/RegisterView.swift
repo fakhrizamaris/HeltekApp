@@ -23,15 +23,14 @@ struct RegisterView: View {
     @State private var errorMessage = ""
     @State private var showError = false
     
-    // Untuk kembali ke LoginView (dismiss sheet)
+    // Untuk kembali ke LoginView (pop navigation)
     @Environment(\.dismiss) private var dismiss
     
     // Saat ini = true, app otomatis pindah ke MainTabView
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 0) {
                     
                     // MARK: - Header gambar (sama dengan LoginView)
@@ -216,6 +215,7 @@ struct RegisterView: View {
             }
             .background(Color.white.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
@@ -228,7 +228,6 @@ struct RegisterView: View {
                         .font(ThemeFont.bodyBold)
                         .foregroundColor(Color.textPrimary)
                 }
-            }
         }
     }
     

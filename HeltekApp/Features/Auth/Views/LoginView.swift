@@ -19,7 +19,7 @@ struct LoginView: View {
     @AppStorage("userEmail") private var userEmail = ""
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .topLeading) {
                 // Background utama
                 Color.themeBackground.ignoresSafeArea()
@@ -200,13 +200,13 @@ struct LoginView: View {
                         .background(Circle().fill(Color.white.opacity(0.8)))
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
-                .padding(.top, -6) // Sesuaikan dengan tinggi safe area / notch / dynamic island
+                .padding(.top, 16) 
                 .padding(.leading, 16)
             }
-            .navigationBarHidden(true) // Sembunyikan navigasi bawaan yang bikin ruang putih
-        }
-        .sheet(isPresented: $showRegister) {
-             RegisterView()
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(isPresented: $showRegister) {
+                RegisterView()
+            }
         }
     }
     
