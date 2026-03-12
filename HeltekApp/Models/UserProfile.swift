@@ -70,13 +70,25 @@ enum SittingDuration: Int, CaseIterable {
         }
     }
     
+    // SF Symbol name — dipakai sebagai Image(systemName:)
     var icon: String {
         switch self {
-        case .lessThan4:  return "🟢"
-        case .fourToSix:  return "🟡"
-        case .sixToEight: return "🟠"
-        case .eightToTen: return "🔴"
-        case .moreThan10: return "🚨"
+        case .lessThan4:  return "checkmark.shield.fill"
+        case .fourToSix:  return "exclamationmark.triangle.fill"
+        case .sixToEight: return "exclamationmark.triangle.fill"
+        case .eightToTen: return "flame.fill"
+        case .moreThan10: return "bolt.trianglebadge.exclamationmark.fill"
+        }
+    }
+    
+    // Warna icon berdasarkan risiko
+    var iconColorName: String {
+        switch self {
+        case .lessThan4:  return "green"
+        case .fourToSix:  return "yellow"
+        case .sixToEight: return "orange"
+        case .eightToTen: return "red"
+        case .moreThan10: return "red"
         }
     }
     

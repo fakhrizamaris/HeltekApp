@@ -100,9 +100,9 @@ struct UserProfileSetupView: View {
     private var stepIcon: String {
         switch viewModel.currentStep {
         case 0: return "person.fill"
-        case 1: return "calendar.badge.clock"
+        case 1: return "clock.fill"
         case 2: return "briefcase.fill"
-        case 3: return "chair.fill"
+        case 3: return "figure.walk"
         default: return "person.fill"
         }
     }
@@ -119,7 +119,7 @@ struct UserProfileSetupView: View {
     
     private var stepSubtitle: String {
         switch viewModel.currentStep {
-        case 0: return "Biar kita bisa menyapamu dengan hangat 👋"
+        case 0: return "Biar kita bisa menyapamu dengan hangat"
         case 1: return "Kami akan menyesuaikan program stretching untukmu"
         case 2: return "Kami ingin tahu jenis pekerjaan yang sering duduk"
         case 3: return "Ini membantu kami mengatur pengingat stretching untukmu"
@@ -189,7 +189,7 @@ struct UserProfileSetupView: View {
                         .foregroundColor(.textPrimary)
                     
                     HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "text.quote")
+                        Image(systemName: "quote.bubble.fill")
                             .foregroundColor(.themePrimary)
                             .frame(width: 20)
                             .padding(.top, 4)
@@ -254,7 +254,7 @@ struct UserProfileSetupView: View {
                 
                 // Fun fact card
                 funFactCard(
-                    icon: "💡",
+                    sfIcon: "lightbulb.fill",
                     title: "Tahukah kamu?",
                     text: "Duduk terlalu lama bisa meningkatkan risiko penyakit jantung. Stretching 30 detik setiap 45 menit bisa membantu!"
                 )
@@ -365,17 +365,17 @@ struct UserProfileSetupView: View {
     // MARK: - Occupation Icons
     private func occupationIcon(for type: OccupationType) -> String {
         switch type {
-        case .programmer:   return "laptopcomputer"
+        case .programmer:   return "desktopcomputer"
         case .designer:     return "paintbrush.fill"
         case .dataEntry:    return "keyboard"
         case .writer:       return "doc.text.fill"
-        case .accountant:   return "banknote"
+        case .accountant:   return "dollarsign.circle.fill"
         case .admin:        return "folder.fill"
         case .student:      return "graduationcap.fill"
         case .gamer:        return "gamecontroller.fill"
-        case .callCenter:   return "headphones"
+        case .callCenter:   return "phone.fill"
         case .researcher:   return "magnifyingglass"
-        case .other:        return "ellipsis"
+        case .other:        return "ellipsis.circle.fill"
         }
     }
     
@@ -407,9 +407,14 @@ struct UserProfileSetupView: View {
             }
         } label: {
             HStack(spacing: 14) {
-                Text(duration.icon)
-                    .font(.system(size: 24))
-                    .frame(width: 36)
+                Image(systemName: duration.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(colorForDuration(duration))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(colorForDuration(duration).opacity(0.15))
+                    )
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(duration.label)
@@ -460,7 +465,7 @@ struct UserProfileSetupView: View {
     private var riskInfoCard: some View {
         VStack(spacing: 10) {
             HStack {
-                Image(systemName: "heart.text.clipboard")
+                Image(systemName: "heart.circle.fill")
                     .foregroundColor(.themePrimary)
                 Text("Rekomendasi Stretching")
                     .font(ThemeFont.bodyBold)
@@ -485,11 +490,12 @@ struct UserProfileSetupView: View {
     }
     
     // MARK: - Fun Fact Card
-    private func funFactCard(icon: String, title: String, text: String) -> some View {
+    private func funFactCard(sfIcon: String, title: String, text: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(icon)
-                    .font(.system(size: 20))
+            HStack(spacing: 8) {
+                Image(systemName: sfIcon)
+                    .font(.system(size: 18))
+                    .foregroundColor(.themePrimary)
                 Text(title)
                     .font(ThemeFont.bodyBold)
                     .foregroundColor(.textPrimary)
@@ -506,6 +512,17 @@ struct UserProfileSetupView: View {
             RoundedRectangle(cornerRadius: ThemeStyle.cornerRadius)
                 .fill(Color.themePrimary.opacity(0.06))
         )
+    }
+    
+    // MARK: - Color Helper untuk Durasi Duduk
+    private func colorForDuration(_ duration: SittingDuration) -> Color {
+        switch duration.iconColorName {
+        case "green":  return .green
+        case "yellow": return .yellow
+        case "orange": return .orange
+        case "red":    return .red
+        default:       return .gray
+        }
     }
     
     // MARK: - Bottom Buttons
@@ -552,7 +569,7 @@ struct UserProfileSetupView: View {
                             .scaleEffect(0.8)
                     } else {
                         Text(viewModel.currentStep == viewModel.totalSteps - 1
-                             ? "Selesai 🎉"
+                             ? "Selesai"
                              : "Lanjut")
                             .font(ThemeFont.button)
                         

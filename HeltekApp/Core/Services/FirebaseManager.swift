@@ -152,5 +152,69 @@ class FirebaseManager: ObservableObject {
             print("❌ Gagal ambil leaderboard: \(error.localizedDescription)")
         }
     }
+    
+    // MARK: - Simpan Detail Profil User (Data Diri Lengkap)
+    // Menyimpan data profil lengkap ke dokumen user yang sama di Firestore
+    // merge: true = hanya update field ini, TIDAK hapus totalPoints, createdAt, dll
+    func saveUserDetailProfile(profile: UserProfile) async throws {
+        let docRef = db.collection(usersCollection).document(profile.id)
+        
+        try await docRef.setData([
+            "fullName":          profile.fullName,
+            "age":               profile.age,
+            "bio":               profile.bio,
+            "occupation":        profile.occupation,
+            "dailySittingHours": profile.dailySittingHours,
+            "profileCompleted":  true,
+            "updatedAt":         Timestamp(date: Date()),
+            // Update juga field 'name' supaya konsisten dengan leaderboard
+            "name":              profile.fullName
+        ], merge: true)
+        
+        print("✅ Detail profil berhasil disimpan untuk: \(profile.fullName)")
+    }
+    
+    // MARK: - Ambil Detail Profil User
+    // Analoginya: SELECT fullName, age, bio, occupation, ... FROM users WHERE id = ?
+    func fetchUserDetailProfile(userID: String) async throws -> UserProfile? {
+        let doc = try await db
+            .collection(usersCollection)
+            .document(userID)
+            .getDocument()
+        
+        guard let data = doc.data() else { return nil }
+        
+        // Cek apakah profil sudah pernah diisi
+        let profileCompleted = data["profileCompleted"] as? Bool ?? false
+        guard profileCompleted else { return nil }
+        
+        return UserProfile(
+            id:                userID,
+            fullName:          data["fullName"] as? String ?? data["name"] as? String ?? "",
+            age:               data["age"] as? Int ?? 0,
+            bio:               data["bio"] as? String ?? "",
+            occupation:        data["occupation"] as? String ?? "",
+            dailySittingHours: data["dailySittingHours"] as? Int ?? 0,
+            profileCompleted:  true,
+            createdAt:         (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
+            updatedAt:         (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
+        )
+    }
+    
+    // MARK: - Cek apakah profil user sudah lengkap
+    // Dipanggil di HeltekAppApp untuk menentukan flow navigasi
+    func isProfileCompleted(userID: String) async -> Bool {
+        do {
+            let doc = try await db
+                .collection(usersCollection)
+                .document(userID)
+                .getDocument()
+            
+            return doc.data()?["profileCompleted"] as? Bool ?? false
+        } catch {
+            print("❌ Gagal cek profil: \(error.localizedDescription)")
+            return false
+        }
+    }
 }
 

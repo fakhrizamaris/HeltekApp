@@ -10,7 +10,6 @@ import SwiftUI
 struct RegisterView: View {
     
     // State untuk setiap field form
-    @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -61,14 +60,6 @@ struct RegisterView: View {
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
-                        
-                        // MARK: - Field: Full Name
-                        FormField(
-                            label: "Full Name",
-                            icon: "person",
-                            placeholder: "Your full name",
-                            text: $fullName
-                        )
                         
                         // MARK: - Field: Email
                         FormField(
@@ -168,7 +159,8 @@ struct RegisterView: View {
                         // MARK: - Tombol Register
                         Button(action: {
                             Task {
-                                await authVM.registerWithEmail(name: fullName, email: email, password: password)
+                                // Nama dikosongkan dulu — akan diisi di ProfileSetupView
+                                await authVM.registerWithEmail(name: "", email: email, password: password)
                             }
                         }) {
                             HStack {
@@ -238,7 +230,6 @@ struct RegisterView: View {
     
     // MARK: - Validasi: semua field sudah diisi dan valid?
     private var formIsValid: Bool {
-        !fullName.isEmpty &&
         !email.isEmpty &&
         password.count >= 8 &&
         password == confirmPassword

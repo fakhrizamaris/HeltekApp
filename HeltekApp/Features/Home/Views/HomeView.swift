@@ -3,6 +3,7 @@ import Combine
 
 struct HomeView: View {
     @StateObject private var authVM = AuthViewModel()
+    @AppStorage("userName") private var userName = "User"
 
     // Warna custom sesuai desain
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
@@ -11,29 +12,41 @@ struct HomeView: View {
     @State private var timeRemaining = 1800 // 30 menit dalam detik (30 * 60)
     @State private var isActive = false
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var showProfile = false
     
     var body: some View {
+        NavigationStack {
         VStack(spacing: 0) {
-            // MARK: - Header
+            // MARK: - Header (Clickable → Profile)
             HStack {
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(lightOrange)
-                        .frame(width: 45, height: 45)
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(themeOrange)
-                        )
-                    
-                    VStack(alignment: .leading) {
-                        Text("Good Morning,")
-                            .font(.subheadline)
+                Button {
+                    showProfile = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(lightOrange)
+                            .frame(width: 45, height: 45)
+                            .overlay(
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(themeOrange)
+                            )
+                        
+                        VStack(alignment: .leading) {
+                            Text(greeting)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            Text(userName.isEmpty ? "User" : userName)
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.gray)
-                        Text("Alex Rivera")
-                            .font(.title3)
-                            .fontWeight(.bold)
                     }
                 }
+                .buttonStyle(.plain)
                 
                 Spacer()
                 
@@ -169,9 +182,23 @@ struct HomeView: View {
                         timeRemaining -= 1
                     } else {
                         isActive = false
-                        // Tambahkan trigger feedback atau notifikasi di sini jika waktu habis
                     }
                 }
+        .navigationDestination(isPresented: $showProfile) {
+            ProfileView()
+        }
+        } // NavigationStack
+    }
+    
+    // Greeting berdasarkan waktu
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:  return "Selamat Pagi,"
+        case 12..<15: return "Selamat Siang,"
+        case 15..<18: return "Selamat Sore,"
+        default:      return "Selamat Malam,"
+        }
     }
     
     func timeString(from totalSeconds: Int) -> String {
