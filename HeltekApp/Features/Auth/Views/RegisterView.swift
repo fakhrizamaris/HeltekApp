@@ -5,9 +5,7 @@
 //  Created by Fakhri Djamaris on 11/03/26.
 //
 
-
 import SwiftUI
-import AuthenticationServices
 
 struct RegisterView: View {
     
@@ -38,13 +36,13 @@ struct RegisterView: View {
                     ZStack {
                         Rectangle()
                             .fill(Color(hex: "FFF0E8"))
-                            .frame(height: 180)
+                            .frame(height: 150)
                         
                         Image(systemName: "person.badge.plus")
                             .resizable()
                             .scaledToFit()
                             .foregroundColor(Color.themePrimary)
-                            .frame(height: 80)
+                            .frame(height: 50)
                     }
                     
                     // MARK: - Form Register
@@ -180,27 +178,7 @@ struct RegisterView: View {
                                 .cornerRadius(ThemeStyle.cornerRadius)
                         }
                         .disabled(!formIsValid) // Nonaktifkan tombol kalau form belum valid
-                        
-                        // Divider
-                        HStack {
-                            Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
-                            Text("Or sign up with")
-                                .font(ThemeFont.caption)
-                                .foregroundColor(Color.textSecondary)
-                                .fixedSize()
-                            Rectangle().fill(Color.gray.opacity(0.3)).frame(height: 1)
-                        }
-                        
-                        // Sign in with Apple (bisa juga untuk register)
-                        SignInWithAppleButton(.signUp) { request in
-                            request.requestedScopes = [.fullName, .email]
-                        } onCompletion: { result in
-                            handleAppleSignIn(result: result)
-                        }
-                        .signInWithAppleButtonStyle(.black)
-                        .frame(height: 50)
-                        .cornerRadius(ThemeStyle.cornerRadius)
-                        
+
                         // Link kembali ke Login
                         HStack {
                             Spacer()
@@ -216,6 +194,7 @@ struct RegisterView: View {
                             .foregroundColor(Color.themePrimary)
                             Spacer()
                         }
+                        .padding(.top, 16)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 28)
@@ -227,7 +206,7 @@ struct RegisterView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
-                        Image(systemName: "arrow.left")
+                        Image(systemName: "chevron.left")
                             .foregroundColor(Color.textPrimary)
                     }
                 }
@@ -241,7 +220,6 @@ struct RegisterView: View {
     }
     
     // MARK: - Validasi: password tidak cocok?
-    // Hanya dicek kalau confirmPassword sudah diisi
     private var passwordMismatch: Bool {
         !confirmPassword.isEmpty && password != confirmPassword
     }
@@ -258,41 +236,18 @@ struct RegisterView: View {
     private func handleRegister() {
         guard formIsValid else { return }
         
-        // Simpan nama user ke UserDefaults supaya bisa ditampilkan di HomeView
-        // Ini seperti: localStorage.setItem('userName', fullName)
+        // Simpan nama dan email user ke AppStorage supaya bisa ditampilkan di HomeView
         UserDefaults.standard.set(fullName, forKey: "userName")
         UserDefaults.standard.set(email, forKey: "userEmail")
         
-        // TODO: Di Fitur 2, kirim data ini ke CloudKit
-        // Untuk sekarang, langsung tandai sudah login
+        print("✅ Registrasi simulasi berhasil! Masuk sebagai: \(fullName) (\(email))")
+        
+        // Langsung tandai sudah login, otomatis meluncur ke MainTabView
         isLoggedIn = true
-    }
-    
-    // MARK: - Fungsi Apple Sign In
-    private func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                // Simpan data dari Apple ke UserDefaults
-                let userID = credential.user
-                let name = credential.fullName?.givenName ?? "User"
-                
-                UserDefaults.standard.set(userID, forKey: "appleUserID")
-                UserDefaults.standard.set(name, forKey: "userName")
-                
-                print("✅ Apple Sign Up berhasil! Nama: \(name)")
-                isLoggedIn = true
-            }
-        case .failure(let error):
-            errorMessage = error.localizedDescription
-            showError = true
-            print("❌ Apple Sign Up gagal: \(error.localizedDescription)")
-        }
     }
 }
 
 // MARK: - Komponen reusable untuk field teks biasa
-// Ini seperti membuat komponen <FormInput /> di React
 struct FormField: View {
     let label: String
     let icon: String

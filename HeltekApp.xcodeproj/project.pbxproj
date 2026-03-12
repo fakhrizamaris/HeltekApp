@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4183A67F2F61731000E26010 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A67E2F61731000E26010 /* FirebaseAuth */; };
 		4183A6812F61731000E26010 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A6802F61731000E26010 /* FirebaseFirestore */; };
+		41AE1DC12F624996004B53FE /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 41AE1DC02F624996004B53FE /* FirebaseAnalytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,16 +44,25 @@
 			files = (
 				4183A67F2F61731000E26010 /* FirebaseAuth in Frameworks */,
 				4183A6812F61731000E26010 /* FirebaseFirestore in Frameworks */,
+				41AE1DC12F624996004B53FE /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		41AE1DBF2F624996004B53FE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		41CD120A2F603FBB00E91BC9 = {
 			isa = PBXGroup;
 			children = (
 				41CD12152F603FBB00E91BC9 /* HeltekApp */,
+				41AE1DBF2F624996004B53FE /* Frameworks */,
 				41CD12142F603FBB00E91BC9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,6 +97,7 @@
 			packageProductDependencies = (
 				4183A67E2F61731000E26010 /* FirebaseAuth */,
 				4183A6802F61731000E26010 /* FirebaseFirestore */,
+				41AE1DC02F624996004B53FE /* FirebaseAnalytics */,
 			);
 			productName = HeltekApp;
 			productReference = 41CD12132F603FBB00E91BC9 /* HeltekApp.app */;
@@ -155,6 +166,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HeltekApp/HeltekApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 878Q92457C;
@@ -188,6 +200,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HeltekApp/HeltekApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 878Q92457C;
@@ -381,6 +394,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		41AE1DC02F624996004B53FE /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4183A67D2F61731000E26010 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

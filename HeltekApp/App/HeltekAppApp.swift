@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import FirebaseCore      // ← tambah import ini
 
 @main
 struct HeltekAppApp: App {
@@ -14,11 +13,6 @@ struct HeltekAppApp: App {
     
     // init() dipanggil saat app pertama kali buka
     // Tempat yang tepat untuk inisialisasi Firebase
-    init() {
-        // Seperti koneksi ke database — harus dilakukan sekali di awal
-        FirebaseApp.configure()
-        print("🔥 Firebase berhasil diinisialisasi!")
-    }
     
     var body: some Scene {
         WindowGroup {
