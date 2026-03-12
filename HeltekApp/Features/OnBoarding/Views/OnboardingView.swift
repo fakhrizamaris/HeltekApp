@@ -100,8 +100,6 @@ struct OnboardingView: View {
                         
                         // Tombol Next / Get Started
                         Button(action: {
-                            // DEBUG: Cetak ke console setiap tombol ditekan
-                            print("🔘 Tombol ditekan! currentPage = \(currentPage), total pages = \(pages.count)")
                             handleNextTap()
                         }) {
                             HStack(spacing: 8) {
@@ -121,26 +119,6 @@ struct OnboardingView: View {
                             .background(Color.themePrimary)
                             .cornerRadius(ThemeStyle.cornerRadius)
                         }
-                        
-                        // DEBUG: Tampilkan status langsung di layar
-                        // Hapus VStack ini setelah berhasil!
-                        VStack(spacing: 4) {
-                            Text("DEBUG INFO")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.red)
-                            Text("currentPage: \(currentPage) / \(pages.count - 1)")
-                                .font(.system(size: 11))
-                                .foregroundColor(.red)
-                            Text("hasSeenOnboarding: \(hasSeenOnboarding ? "TRUE ✅" : "FALSE ❌")")
-                                .font(.system(size: 11))
-                                .foregroundColor(.red)
-                            Text("isLastPage: \(currentPage == pages.count - 1 ? "YA ✅" : "BELUM ❌")")
-                                .font(.system(size: 11))
-                                .foregroundColor(.red)
-                        }
-                        .padding(8)
-                        .background(Color.yellow.opacity(0.3))
-                        .cornerRadius(8)
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 44)
@@ -151,9 +129,7 @@ struct OnboardingView: View {
             // Tombol Skip (halaman 2 & 3, bukan splash & bukan terakhir)
             if currentPage > 0 && currentPage < pages.count - 1 {
                 Button(action: {
-                    print("⏭️ Skip ditekan! Set hasSeenOnboarding = true")
                     hasSeenOnboarding = true
-                    print("⏭️ Setelah set, hasSeenOnboarding = \(hasSeenOnboarding)")
                 }) {
                     Text("Skip")
                         .font(ThemeFont.bodyBold)
@@ -167,21 +143,13 @@ struct OnboardingView: View {
         }
         // Auto-advance splash screen setelah 2 detik
         .onAppear {
-            print("👋 OnboardingView muncul. hasSeenOnboarding = \(hasSeenOnboarding)")
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 if currentPage == 0 {
-                    print("⏩ Auto-advance dari splash ke halaman 1")
                     withAnimation(.easeInOut) {
                         currentPage = 1
                     }
                 }
             }
-        }
-        // DEBUG: Pantau setiap perubahan hasSeenOnboarding
-        .onChange(of: hasSeenOnboarding) { oldValue, newValue in
-            print("🔄 hasSeenOnboarding berubah: \(oldValue) → \(newValue)")
-            print("🔄 Seharusnya sekarang pindah ke LoginView!")
         }
     }
     
@@ -194,13 +162,10 @@ struct OnboardingView: View {
     private func handleNextTap() {
         if currentPage < pages.count - 1 {
             // Belum halaman terakhir — pindah ke halaman berikutnya
-            print("➡️ Pindah ke halaman \(currentPage + 1)")
             withAnimation { currentPage += 1 }
         } else {
             // Halaman terakhir — selesai onboarding
-            print("🏁 Halaman terakhir! Set hasSeenOnboarding = true")
             hasSeenOnboarding = true
-            print("🏁 Nilai hasSeenOnboarding sekarang = \(hasSeenOnboarding)")
         }
     }
 }
@@ -358,4 +323,3 @@ struct RoundedCorner: Shape {
 #Preview {
     OnboardingView()
 }
-
