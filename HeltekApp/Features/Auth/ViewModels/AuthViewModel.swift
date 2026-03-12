@@ -142,6 +142,78 @@ class AuthViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Register dengan Email & Password
+    func registerWithEmail(name: String, email: String, password: String) async {
+        isLoading = true
+        showError = false
+        
+        do {
+            // 1. Buat user di Firebase Auth
+            let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+            let firebaseUser = authResult.user
+            
+            print("🚀 Registrasi Firebase Auth berhasil! UID: \(firebaseUser.uid)")
+            
+            // 2. Simpan profil ke Firestore via FirebaseManager
+            try await firebase.saveUserProfile(
+                userID: firebaseUser.uid,
+                name: name,
+                email: email
+            )
+            
+            // 3. Simpan ke AppStorage (Sesuai dengan cara kamu menyimpan State)
+            self.userID = firebaseUser.uid
+            self.userName = name
+            self.userEmail = email
+            
+            print("✅ Data profil berhasil disimpan ke Firestore. Selamat datang, \(name)")
+            
+            isLoading = false
+            
+            // 4. Ubah flag login agar masuk ke MainTabView
+            isLoggedIn = true
+            
+        } catch {
+            isLoading = false
+            handleError("Registrasi gagal: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Login dengan Email & Password
+    func loginWithEmail(email: String, password: String) async {
+        isLoading = true
+        showError = false
+        
+        do {
+            // 1. Verifikasi kredensial di Firebase Auth
+            let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
+            let firebaseUser = authResult.user
+            
+            print("🔥 Login Email Auth berhasil! UID: \(firebaseUser.uid)")
+            
+            // 2. Ambil data dari Firestore untuk mendapatkan Nama User
+            if let userProfile = try await firebase.fetchUserProfile(userID: firebaseUser.uid) {
+                self.userName = userProfile.name
+                self.userEmail = userProfile.email
+            } else {
+                // Berjaga-jaga jika dokumen profil tidak ada
+                self.userName = "User"
+                self.userEmail = email
+            }
+            
+            self.userID = firebaseUser.uid
+            
+            isLoading = false
+            
+            // 3. Ubah flag login agar masuk ke MainTabView
+            isLoggedIn = true
+            
+        } catch {
+            isLoading = false
+            handleError("Login gagal: \(error.localizedDescription)")
+        }
+    }
+    
     // MARK: - Logout
     func logout() {
         do {

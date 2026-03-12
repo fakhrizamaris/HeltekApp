@@ -2,14 +2,14 @@ import SwiftUI
 import Combine
 
 struct HomeView: View {
-    // Warna custom sesuai desain
-    let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
-        let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
-    
-    @State private var timeRemaining = 1800 // 30 menit dalam detik (30 * 60)
+    @StateObject private var authVM = AuthViewModel()
     @State private var isActive = false
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+    @State private var timeRemaining = 1800
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private let themeOrange = Color.themePrimary
+    private let lightOrange = Color.themePrimaryFaded
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Header
@@ -22,7 +22,7 @@ struct HomeView: View {
                             Image(systemName: "person.fill")
                                 .foregroundColor(themeOrange)
                         )
-                    
+
                     VStack(alignment: .leading) {
                         Text("Good Morning,")
                             .font(.subheadline)
@@ -32,9 +32,9 @@ struct HomeView: View {
                             .fontWeight(.bold)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "bell")
                     .font(.title3)
                     .padding(10)
@@ -42,7 +42,7 @@ struct HomeView: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
-            
+
             // MARK: - Content Section
             VStack(spacing: 30) {
                 HStack {
@@ -53,26 +53,25 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 40)
-                
+
                 // Timer Circle
                 ZStack {
                     Circle()
                         .stroke(lightOrange, lineWidth: 15)
                         .frame(width: 250, height: 250)
-                    
-                    // Progress Indicator (Seperempat lingkaran di atas)
+
                     Circle()
-                                            .trim(from: 0, to: CGFloat(timeRemaining) / 1800.0)
-                                            .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
-                                            .frame(width: 260, height: 260)
-                                            .rotationEffect(.degrees(-90))
-                                            .animation(.easeInOut, value: timeRemaining)
-                    
+                        .trim(from: 0, to: CGFloat(timeRemaining) / 1800.0)
+                        .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                        .frame(width: 260, height: 260)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeInOut, value: timeRemaining)
+
                     Text(timeString(from: timeRemaining))
-                                            .font(.system(size: 70, weight: .bold, design: .rounded))
-                                            .foregroundColor(themeOrange)
+                        .font(.system(size: 70, weight: .bold, design: .rounded))
+                        .foregroundColor(themeOrange)
                 }
-                
+
                 Text("Time to stand up and stretch those legs!")
                     .font(.body)
                     .fontWeight(.semibold)
@@ -81,7 +80,7 @@ struct HomeView: View {
                     .padding(.horizontal, 40)
                     .padding(.vertical, 20)
             }
-            
+
             // MARK: - Streak Card
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 15) {
@@ -89,17 +88,16 @@ struct HomeView: View {
                         Circle()
                             .fill(lightOrange)
                             .frame(width: 50, height: 50)
-                        Image(systemName: "egg.fill") // Placeholder icon
+                        Image(systemName: "egg.fill")
                             .foregroundColor(themeOrange)
                     }
-                    
+
                     VStack(alignment: .leading) {
                         Text("CURRENT STREAK")
                             .font(.caption2)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
-                        
-                        // Progress Bar
+
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 Capsule()
@@ -112,14 +110,14 @@ struct HomeView: View {
                         }
                         .frame(height: 8)
                     }
-                    
+
                     VStack(alignment: .trailing) {
                         Text("12 Days")
                             .font(.title3)
                             .fontWeight(.black)
                     }
                 }
-                
+
                 Text("Your pet is hatching! Keep moving.")
                     .font(.caption)
                     .foregroundColor(themeOrange)
@@ -132,56 +130,64 @@ struct HomeView: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
             .padding(.horizontal, 24)
-            
+
             // MARK: - Start Button
             Button(action: {
-                            if isActive {
-                                
-                                isActive = false
-                                timeRemaining = 1800
-                            } else {
-                                
-                                isActive = true
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: isActive ? "stop.fill" : "bolt.fill")
-                                Text(isActive ? "Stop" : "Start Focus")
-                                    .fontWeight(.bold)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
-                            .cornerRadius(15)
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 30)
-            
+                if isActive {
+                    isActive = false
+                    timeRemaining = 1800
+                } else {
+                    isActive = true
+                }
+            }) {
+                HStack {
+                    Image(systemName: isActive ? "stop.fill" : "bolt.fill")
+                    Text(isActive ? "Stop" : "Start Focus")
+                        .fontWeight(.bold)
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
+                .cornerRadius(15)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 30)
+
+            // MARK: - Logout (placeholder)
+            Button(action: {
+                authVM.logout()
+            }) {
+                Text("Logout")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red)
+                    .cornerRadius(10)
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 30)
         }
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
         .onReceive(timer) { _ in
-                    guard isActive else { return }
-                    
-                    if timeRemaining > 0 {
-                        timeRemaining -= 1
-                    } else {
-                        isActive = false
-                        // Tambahkan trigger feedback atau notifikasi di sini jika waktu habis
-                    }
-                }
+            guard isActive else { return }
+
+            if timeRemaining > 0 {
+                timeRemaining -= 1
+            } else {
+                isActive = false
+            }
+        }
     }
-    
-    func timeString(from totalSeconds: Int) -> String {
+
+    private func timeString(from totalSeconds: Int) -> String {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 }
-
-// Preview
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-    }
+#Preview {
+    HomeView()
 }
+
