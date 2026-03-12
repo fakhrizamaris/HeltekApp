@@ -436,6 +436,14 @@ private struct CardShadow: ViewModifier {
     func body(content: Content) -> some View {
         ThemeStyle.cardShadow(for: content)
     }
+struct StatsView: View {
+    var body: some View {
+        VStack {
+            Text("Ini Stats")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+        }
+    }
 }
 
 #Preview {

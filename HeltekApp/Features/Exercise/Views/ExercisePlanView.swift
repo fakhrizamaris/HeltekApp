@@ -31,6 +31,11 @@ struct ExercisePlanView: View {
             .navigationDestination(for: ExercisePlan.self) { plan in
                 ExercisePlanDetailView(plan: plan)
             }
+    var body: some View {
+        VStack {
+            Text("Ini Exercise Plan")
+                .font(.largeTitle)
+                .fontWeight(.bold)
         }
     }
 }
