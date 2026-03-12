@@ -133,7 +133,7 @@ struct OnboardingView: View {
                 }) {
                     Text("Skip")
                         .font(ThemeFont.bodyBold)
-                        .foregroundColor(Color.themePrimary)
+                        .foregroundColor(.white)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 6)
                 }

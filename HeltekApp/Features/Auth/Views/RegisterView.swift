@@ -247,17 +247,6 @@ struct RegisterView: View {
     
     // MARK: - Fungsi Register
     private func handleRegister() {
-        // dummy digantikan dengan pemanggilan Task di button action
-        // guard formIsValid else { return }
-        
-        // // Simpan nama dan email user ke AppStorage supaya bisa ditampilkan di HomeView
-        // UserDefaults.standard.set(fullName, forKey: "userName")
-        // UserDefaults.standard.set(email, forKey: "userEmail")
-        
-        // print("✅ Registrasi simulasi berhasil! Masuk sebagai: \(fullName) (\(email))")
-        
-        // // Langsung tandai sudah login, otomatis meluncur ke MainTabView
-        // isLoggedIn = true
     }
 }
 

@@ -53,6 +53,8 @@ struct LoginView: View {
                         .padding(.bottom, 24)
                         
                         // MARK: - Form
+                        // TODO: -njknj
+                        // FIXME: --
                         VStack(alignment: .leading, spacing: 20) {
                             
                             // Field Email
@@ -198,7 +200,7 @@ struct LoginView: View {
                         .background(Circle().fill(Color.white.opacity(0.8)))
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
-                .padding(.top, 6) // Sesuaikan dengan tinggi safe area / notch / dynamic island
+                .padding(.top, -6) // Sesuaikan dengan tinggi safe area / notch / dynamic island
                 .padding(.leading, 16)
             }
             .navigationBarHidden(true) // Sembunyikan navigasi bawaan yang bikin ruang putih
@@ -209,10 +211,5 @@ struct LoginView: View {
     }
     
     private func handleLogin() {
-        // Method lama yang hanya simulasi
-        // guard !email.isEmpty, !password.isEmpty else { return }
-        // userEmail = email
-        // print("✅ Login simulasi berhasil! Masuk sebagai: \(email)")
-        // isLoggedIn = true
     }
 }
