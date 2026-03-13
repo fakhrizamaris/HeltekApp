@@ -28,6 +28,7 @@ struct ExerciseStep: Identifiable, Hashable {
     let function: String
     let durationOrReps: String
     let imageName: String     // Nama gambar thumbnail gerakan
+    let motionGifName: String? // Optional GIF animation name in Assets
 }
 
 // MARK: - 2. HARDCODED MOCK DATA
@@ -49,21 +50,24 @@ extension ExercisePlan {
                     instruction: "Tarik dagu ke belakang (membuat double chin) tanpa menunduk.",
                     function: "Mengembalikan posisi kepala agar tidak maju ke depan.",
                     durationOrReps: "Tahan 3 detik",
-                    imageName: "step_chin_tucks"
+                    imageName: "step_chin_tucks",
+                    motionGifName: "motion_chin_tucks"
                 ),
                 ExerciseStep(
                     title: "Neck Side Tilt",
                     instruction: "Miringkan kepala ke kanan, bantu dengan tangan kanan. Ulangi sisi kiri.",
                     function: "Melenturkan otot leher samping yang tegang.",
                     durationOrReps: "Tahan 15 detik",
-                    imageName: "step_neck_tilt"
+                    imageName: "step_neck_tilt",
+                    motionGifName: "motion_neck_tilt"
                 ),
                 ExerciseStep(
                     title: "Shoulder Blade Squeezes",
                     instruction: "Tarik kedua belikat ke belakang hingga dada membusung.",
                     function: "Memperbaiki postur bahu yang membungkuk.",
                     durationOrReps: "Tahan 5 detik",
-                    imageName: "step_shoulder_squeeze"
+                    imageName: "step_shoulder_squeeze",
+                    motionGifName: "motion_shoulder_squeeze"
                 )
             ]
         ),
@@ -82,21 +86,24 @@ extension ExercisePlan {
                     instruction: "Satukan jemari tangan, dorong ke atas setinggi mungkin sambil menarik napas dalam.",
                     function: "Dekompresi alami untuk ruang antar ruas tulang belakang.",
                     durationOrReps: "3-5 Repetisi",
-                    imageName: "step_overhead_reach"
+                    imageName: "step_overhead_reach",
+                    motionGifName: "motion_overhead_reach"
                 ),
                 ExerciseStep(
                     title: "Standing Side Reach",
                     instruction: "Berdiri, angkat satu tangan ke atas dan condongkan tubuh ke sisi berlawanan.",
                     function: "Meregangkan otot samping (obliques) yang tertekan saat duduk.",
                     durationOrReps: "10 detik per sisi",
-                    imageName: "step_side_reach"
+                    imageName: "step_side_reach",
+                    motionGifName: "motion_side_reach"
                 ),
                 ExerciseStep(
                     title: "Seated Cat-Cow",
                     instruction: "Tangan di lutut, busungkan dada ke depan (tarik napas), bungkukkan punggung ke belakang (buang napas).",
                     function: "Mengaktifkan setiap ruas tulang belakang agar tidak kaku.",
                     durationOrReps: "5 Repetisi",
-                    imageName: "step_cat_cow"
+                    imageName: "step_cat_cow",
+                    motionGifName: "motion_cat_cow"
                 )
             ]
         ),
@@ -115,21 +122,24 @@ extension ExercisePlan {
                     instruction: "Duduk, gerakkan telapak kaki naik-turun (jinjit-tumit) secara ritmis.",
                     function: "Memompa darah kembali dari kaki ke jantung.",
                     durationOrReps: "30 detik",
-                    imageName: "step_ankle_pumps"
+                    imageName: "step_ankle_pumps",
+                    motionGifName: "motion_ankle_pumps"
                 ),
                 ExerciseStep(
                     title: "Chair Squats",
                     instruction: "Berdiri dari kursi lalu duduk kembali tanpa menggunakan tangan.",
                     function: "Mengaktifkan otot terbesar di tubuh untuk membakar energi.",
                     durationOrReps: "5-10 Repetisi",
-                    imageName: "step_chair_squats"
+                    imageName: "step_chair_squats",
+                    motionGifName: "motion_chair_squats"
                 ),
                 ExerciseStep(
                     title: "Hip Flexor Lunge",
                     instruction: "Langkah satu kaki ke depan, tekan panggul sedikit ke depan hingga terasa ditarik.",
                     function: "Melawan efek duduk 90 derajat yang membuat panggul kaku.",
                     durationOrReps: "15 detik per sisi",
-                    imageName: "step_hip_lunge"
+                    imageName: "step_hip_lunge",
+                    motionGifName: "motion_hip_lunge"
                 )
             ]
         )

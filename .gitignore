@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+xcuserdata/
+.DS_Store
+**/.DS_Store
+=======
 # Created by https://www.toptal.com/developers/gitignore/api/xcode,swift,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=xcode,swift,macos
 
@@ -110,3 +115,4 @@ iOSInjectionProject/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 # End of https://www.toptal.com/developers/gitignore/api/xcode,swift,macos
+>>>>>>> origin/brian
