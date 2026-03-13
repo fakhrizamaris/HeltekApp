@@ -262,7 +262,7 @@ struct HomeView: View {
         switch hour {
         case 5..<12:  return "Good Morning,"
         case 12..<17: return "Good Afternoon,"
-        case 17..<21: return "Good Evening,"
+        case 17..<19: return "Good Evening,"
         default:      return "Good Night,"
         }
     }
