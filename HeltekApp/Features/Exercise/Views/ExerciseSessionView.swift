@@ -11,6 +11,7 @@ import ImageIO
 
 struct ExerciseSessionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Binding var didCompleteSession: Bool
 
     // MARK: - Session State
     @State private var sessionSteps: [ExerciseStep] = []
@@ -26,6 +27,10 @@ struct ExerciseSessionView: View {
     private let grayText = Color(red: 0.58, green: 0.62, blue: 0.68)
     private let primaryOrange = Color(red: 0.93, green: 0.44, blue: 0.24)
     private let lightOrangeBg = Color(red: 0.98, green: 0.91, blue: 0.89)
+
+    init(didCompleteSession: Binding<Bool> = .constant(false)) {
+        _didCompleteSession = didCompleteSession
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -270,6 +275,7 @@ struct ExerciseSessionView: View {
     private func startSessionIfNeeded() {
         guard sessionSteps.isEmpty else { return }
 
+        didCompleteSession = false
         let steps = ExercisePlan.mockData
         let categoryA = steps.first?.steps.randomElement()
         let categoryB = steps.dropFirst().first?.steps.randomElement()
@@ -314,13 +320,25 @@ struct ExerciseSessionView: View {
 
     @MainActor
     private func sessionCompleted() {
-        // Placeholder for Firebase updates (exercise count & streak)
-        // TODO: Integrate with backend when ready.
-        dismiss()
+        Task {
+            do {
+                print("🟠 sessionCompleted: recording exercise session")
+                try await FirebaseManager.shared.recordExerciseSession(
+                    durationSeconds: 60,
+                    stretches: sessionSteps.count
+                )
+                print("✅ sessionCompleted: record success")
+            } catch {
+                print("❌ Failed to record session: \(error.localizedDescription)")
+            }
+            didCompleteSession = true
+            dismiss()
+        }
     }
 
     private func endSession() {
         timerTask?.cancel()
+        didCompleteSession = false
         dismiss()
     }
 

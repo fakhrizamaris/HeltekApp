@@ -46,6 +46,140 @@ class FirebaseManager: ObservableObject {
     @Published var isLoadingLeaderboard = false
     
     private init() {}
+
+    // MARK: - Record Exercise Session
+    // Update streak, total minutes, and total stretch counts (WIB timezone)
+    func recordExerciseSession(durationSeconds: Int, stretches: Int) async throws {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            throw NSError(domain: "FirebaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+
+        print("🟠 recordExerciseSession start for user: \(userID)")
+        let timeZone = TimeZone(identifier: "Asia/Jakarta") ?? .current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+
+        let now = Date()
+        let dateKey = Self.dateKey(from: now, calendar: calendar)
+        let monthKey = Self.monthKey(from: now, calendar: calendar)
+        let weekOfMonth = calendar.component(.weekOfMonth, from: now)
+        let weekKey = "W\(weekOfMonth)"
+
+        let durationMinutes = max(1, durationSeconds / 60)
+
+        let userRef = db.collection(usersCollection).document(userID)
+        let dailyRef = userRef.collection("dailyStats").document(dateKey)
+        let weeklyRef = userRef.collection("weeklyStats").document(monthKey)
+        let monthlyRef = userRef.collection("monthlyStats").document(monthKey)
+
+        // 1) Update user streak & totals atomically
+        try await db.runTransaction { transaction, errorPointer in
+            let userDoc: DocumentSnapshot
+            do {
+                userDoc = try transaction.getDocument(userRef)
+            } catch let error as NSError {
+                errorPointer?.pointee = error
+                return nil
+            }
+
+            let lastStreakDate = userDoc.data()?["lastStreakDate"] as? String
+            let currentStreak = userDoc.data()?["streakCount"] as? Int ?? 0
+            let yesterdayKey = Self.dateKey(from: calendar.date(byAdding: .day, value: -1, to: now) ?? now, calendar: calendar)
+
+            let updatedStreak: Int
+            if lastStreakDate == dateKey {
+                updatedStreak = currentStreak
+            } else if lastStreakDate == yesterdayKey {
+                updatedStreak = currentStreak + 1
+            } else {
+                updatedStreak = 1
+            }
+
+            // Writes only after all reads are done
+            transaction.setData([
+                "id": userID,
+                "lastStreakDate": dateKey,
+                "streakCount": updatedStreak,
+                "totalMinutesAllTime": FieldValue.increment(Int64(durationMinutes)),
+                "totalStretchCount": FieldValue.increment(Int64(stretches)),
+                "updatedAt": Timestamp(date: now)
+            ], forDocument: userRef, merge: true)
+
+            return nil
+        }
+
+        // 2) Update daily/weekly/monthly aggregates (non-transactional)
+        let dailyPath = dailyRef.path
+        let weeklyPath = weeklyRef.path
+        let monthlyPath = monthlyRef.path
+        print("🟠 writing dailyStats: \(dailyPath)")
+        print("🟠 writing weeklyStats: \(weeklyPath)")
+        print("🟠 writing monthlyStats: \(monthlyPath)")
+
+        try await dailyRef.setData([
+            "date": dateKey,
+            "didExercise": true,
+            "totalActive": FieldValue.increment(Int64(durationMinutes)),
+            "totalExercise": FieldValue.increment(Int64(stretches))
+        ], merge: true)
+        let dailySnapshot = try await dailyRef.getDocument(source: .server)
+        print("✅ dailyStats exists on server: \(dailySnapshot.exists)")
+
+        let weeklyDoc = try await weeklyRef.getDocument()
+        if !weeklyDoc.exists {
+            try await weeklyRef.setData([
+                "weeks": [
+                    "W1": ["totalActive": 0, "totalExercise": 0],
+                    "W2": ["totalActive": 0, "totalExercise": 0],
+                    "W3": ["totalActive": 0, "totalExercise": 0],
+                    "W4": ["totalActive": 0, "totalExercise": 0],
+                    "W5": ["totalActive": 0, "totalExercise": 0]
+                ]
+            ], merge: true)
+        }
+
+        try await weeklyRef.updateData([
+            FieldPath(["weeks", weekKey, "totalActive"]): FieldValue.increment(Int64(durationMinutes)),
+            FieldPath(["weeks", weekKey, "totalExercise"]): FieldValue.increment(Int64(stretches))
+        ])
+        let weeklySnapshot = try await weeklyRef.getDocument(source: .server)
+        print("✅ weeklyStats exists on server: \(weeklySnapshot.exists)")
+
+        try await monthlyRef.setData([
+            "totalActive": FieldValue.increment(Int64(durationMinutes)),
+            "totalExercise": FieldValue.increment(Int64(stretches))
+        ], merge: true)
+        let monthlySnapshot = try await monthlyRef.getDocument(source: .server)
+        print("✅ monthlyStats exists on server: \(monthlySnapshot.exists)")
+
+        print("✅ recordExerciseSession done: daily=\(dateKey) weekly=\(monthKey)/\(weekKey) monthly=\(monthKey)")
+    }
+
+    private static func dateKey(from date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
+    private static func monthKey(from date: Date, calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.dateFormat = "yyyy-MM"
+        return formatter.string(from: date)
+    }
+
+    // MARK: - Ambil streak count user saat ini
+    func fetchCurrentUserStreakCount() async throws -> Int {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            throw NSError(domain: "FirebaseManager", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        }
+        let doc = try await db
+            .collection(usersCollection)
+            .document(userID)
+            .getDocument()
+        return doc.data()?["streakCount"] as? Int ?? 0
+    }
     
     // MARK: - Simpan atau Update profil user
     // Analoginya: INSERT ... ON DUPLICATE KEY UPDATE di MySQL
@@ -67,6 +201,7 @@ class FirebaseManager: ObservableObject {
                 try await docRef.updateData(["name": name])
             }
             print("👋 User lama ditemukan di Firebase: \(userID)")
+            try await ensureUserStatsDefaults(userID: userID)
             
         } else {
             // User baru — buat dokumen baru
@@ -78,6 +213,7 @@ class FirebaseManager: ObservableObject {
                 "totalPoints":  0,
                 "createdAt":    Timestamp(date: Date())
             ])
+            try await ensureUserStatsDefaults(userID: userID)
             print("🎉 User baru dibuat di Firebase: \(name)")
         }
     }
@@ -170,8 +306,20 @@ class FirebaseManager: ObservableObject {
             // Update juga field 'name' supaya konsisten dengan leaderboard
             "name":              profile.fullName
         ], merge: true)
+        try await ensureUserStatsDefaults(userID: profile.id)
         
         print("✅ Detail profil berhasil disimpan untuk: \(profile.fullName)")
+    }
+
+    // MARK: - Ensure user stats defaults exist
+    func ensureUserStatsDefaults(userID: String) async throws {
+        let docRef = db.collection(usersCollection).document(userID)
+        try await docRef.setData([
+            "streakCount": 0,
+            "lastStreakDate": "",
+            "totalStretchCount": 0,
+            "totalMinutesAllTime": 0
+        ], merge: true)
     }
     
     // MARK: - Ambil Detail Profil User
@@ -217,4 +365,3 @@ class FirebaseManager: ObservableObject {
         }
     }
 }
-
