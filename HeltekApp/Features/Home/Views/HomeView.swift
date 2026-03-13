@@ -2,25 +2,34 @@ import SwiftUI
 import Combine
 
 struct HomeView: View {
-    // Warna custom sesuai desain
-    let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
-        let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
+    // MARK: - ViewModels & AppStorage
+    @StateObject private var authVM = AuthViewModel()
+    @AppStorage("userName") private var userName = "User"
     
-    @State private var timeRemaining = 1800
+    // MARK: - UI Colors
+    let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
+    let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
+    
+    // MARK: - Timer States
+    @State private var timeRemaining = 1800 // Default 30 menit
     @State private var isActive = false
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
+    // MARK: - Navigation & Sheet States
+    @State private var showProfile = false
     @State private var showingBottomSheet = false
-    @State private var selectedMinutes = 45
+    @State private var selectedMinutes = 30
     @State private var navigateToSuccess = false
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: - Header
+                // MARK: - Header (Clickable → Profile)
                 HStack {
-                    HStack(spacing: 12) {
-                        NavigationLink(destination: ProfileView()) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        HStack(spacing: 12) {
                             Circle()
                                 .fill(lightOrange)
                                 .frame(width: 45, height: 45)
@@ -28,17 +37,23 @@ struct HomeView: View {
                                     Image(systemName: "person.fill")
                                         .foregroundColor(themeOrange)
                                 )
-                        }
-                        
-                        VStack(alignment: .leading) {
-                            Text("Good Morning,")
-                                .font(.subheadline)
+                            
+                            VStack(alignment: .leading) {
+                                Text(greeting)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                Text(userName.isEmpty ? "User" : userName)
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.gray)
-                            Text("Alex Rivera")
-                                .font(.title3)
-                                .fontWeight(.bold)
                         }
                     }
+                    .buttonStyle(.plain)
                     
                     Spacer()
                     
@@ -61,28 +76,26 @@ struct HomeView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 40)
                     
-                    // Timer Circle
+                    // Timer Circle Button
                     Button(action: {
-                        
                         showingBottomSheet = true
-                        
                     }) {
                         ZStack {
                             Circle()
                                 .stroke(lightOrange, lineWidth: 15)
                                 .frame(width: 250, height: 250)
                             
-                            // Progress Indicator (Seperempat lingkaran di atas)
+                            // Progress Indicator
                             Circle()
-                                                    .trim(from: 0, to: CGFloat(timeRemaining) / 1800.0)
-                                                    .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
-                                                    .frame(width: 260, height: 260)
-                                                    .rotationEffect(.degrees(-90))
-                                                    .animation(.easeInOut, value: timeRemaining)
+                                .trim(from: 0, to: CGFloat(timeRemaining) / CGFloat(selectedMinutes > 0 ? selectedMinutes * 60 : 1800))
+                                .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                                .frame(width: 260, height: 260)
+                                .rotationEffect(.degrees(-90))
+                                .animation(.easeInOut, value: timeRemaining)
                             
                             Text(timeString(from: timeRemaining))
-                                                    .font(.system(size: 70, weight: .bold, design: .rounded))
-                                                    .foregroundColor(themeOrange)
+                                .font(.system(size: 70, weight: .bold, design: .rounded))
+                                .foregroundColor(themeOrange)
                         }
                     }.buttonStyle(PlainButtonStyle())
                     
@@ -148,74 +161,61 @@ struct HomeView: View {
                 
                 // MARK: - Start Button
                 Button(action: {
-                                if isActive {
-                                    
-                                    isActive = false
-                                    timeRemaining = selectedMinutes * 60
-                                } else {
-                                    
-                                    isActive = true
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: isActive ? "stop.fill" : "bolt.fill")
-                                    Text(isActive ? "Stop" : "Start Focus")
-                                        .fontWeight(.bold)
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
-                                .cornerRadius(15)
-                            }
-                            .padding(.horizontal)
-                            .padding(.vertical, 30)
+                    if isActive {
+                        isActive = false
+                        timeRemaining = selectedMinutes * 60
+                    } else {
+                        isActive = true
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: isActive ? "stop.fill" : "bolt.fill")
+                        Text(isActive ? "Stop" : "Start Focus")
+                            .fontWeight(.bold)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
+                    .cornerRadius(15)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 30)
                 
             }
             .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
+            
+            // MARK: - Modifiers & Destinations
             .sheet(isPresented: $showingBottomSheet) {
-                        // Memanggil View khusus untuk Bottom Sheet
-                        ReminderSheetView(
-                            isPresented: $showingBottomSheet,
-                            selectedMinutes: $selectedMinutes,
-                            timeRemaining: $timeRemaining // Oper nilai untuk mengubah timer
-                        )
-                        .presentationDetents([.fraction(0.55), .medium]) // Mengatur tinggi sheet (iOS 16+)
-                        .presentationDragIndicator(.visible) // Menambahkan garis kecil di atas sheet
-                    }
+                ReminderSheetView(
+                    isPresented: $showingBottomSheet,
+                    selectedMinutes: $selectedMinutes,
+                    timeRemaining: $timeRemaining
+                )
+                .presentationDetents([.fraction(0.55), .medium])
+                .presentationDragIndicator(.visible)
+            }
+            .navigationDestination(isPresented: $showProfile) {
+                ProfileView()
+            }
             .navigationDestination(isPresented: $navigateToSuccess) {
-                            // Panggil halaman baru Anda di sini
-                            ReminderView()
-                        }
+                ReminderView()
+            }
             .onReceive(timer) { _ in
-                        guard isActive else { return }
-                        
-                        if timeRemaining > 0 {
-                            timeRemaining -= 1
-                        } else {
-                            isActive = false
-                            timeRemaining = selectedMinutes * 60
-                            navigateToSuccess = true
-                        }
-                    }
-        }
-        .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
-        .onReceive(timer) { _ in
-                    guard isActive else { return }
-                    
-                    if timeRemaining > 0 {
-                        timeRemaining -= 1
-                    } else {
-                        isActive = false
-                    }
+                guard isActive else { return }
+                
+                if timeRemaining > 0 {
+                    timeRemaining -= 1
+                } else {
+                    isActive = false
+                    timeRemaining = selectedMinutes * 60
+                    navigateToSuccess = true // Otomatis pindah halaman kalau waktu abis
                 }
-        .navigationDestination(isPresented: $showProfile) {
-            ProfileView()
-        }
+            }
         } // NavigationStack
     }
     
-    // Greeting berdasarkan waktu
+    // MARK: - Helper Functions
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -239,12 +239,11 @@ struct ReminderSheetView: View {
     @Binding var selectedMinutes: Int
     @Binding var timeRemaining: Int
     
-    // Warna custom
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
     let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
     
-    // Pilihan waktu untuk picker (misal: kelipatan 5 menit dari 5 sampai 120)
-    let intervalOptions = Array(stride(from: 1, through: 60, by: 5))
+    // Interval 5, 10, 15... sampai 120 menit
+    let intervalOptions = Array(stride(from: 5, through: 120, by: 5))
     
     var body: some View {
         VStack(spacing: 20) {
@@ -258,7 +257,7 @@ struct ReminderSheetView: View {
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
             
-            // Picker Roda (Wheel Picker)
+            // Picker Roda
             Picker("Interval", selection: $selectedMinutes) {
                 ForEach(intervalOptions, id: \.self) { minute in
                     Text("\(minute) min").tag(minute)
@@ -269,9 +268,7 @@ struct ReminderSheetView: View {
             
             // Tombol Set Time
             Button(action: {
-                // Konversi menit ke detik dan update timer utama
                 timeRemaining = selectedMinutes * 60
-                // Tutup sheet
                 isPresented = false
             }) {
                 Text("Set Time")
@@ -286,7 +283,6 @@ struct ReminderSheetView: View {
             
             // Tombol Cancel
             Button(action: {
-                // Langsung tutup tanpa mengubah timer
                 isPresented = false
             }) {
                 Text("Cancel")
@@ -294,7 +290,7 @@ struct ReminderSheetView: View {
                     .foregroundColor(themeOrange)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(lightOrange) // Menggunakan warna oranye pudar
+                    .background(lightOrange)
                     .cornerRadius(15)
             }
             .padding(.horizontal, 24)
@@ -304,10 +300,9 @@ struct ReminderSheetView: View {
     }
 }
 
-// Preview
+// MARK: - Preview
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
     }
 }
-
