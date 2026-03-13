@@ -3,120 +3,142 @@
 //  HeltekApp
 //
 //  Created by Brian Anashari on 11/03/26.
+//  Updated: Menampilkan data user dari AppStorage + tombol Logout
 //
-
 
 import SwiftUI
 
 struct ProfileView: View {
-    // Definisi Warna Kustom
-    let bgColor = Color(red: 0.96, green: 0.96, blue: 0.97)
-    let darkText = Color(red: 0.08, green: 0.12, blue: 0.18)
-    let grayText = Color(red: 0.58, green: 0.62, blue: 0.68)
-    let orangeIcon = Color(red: 0.93, green: 0.44, blue: 0.24)
-    let lightOrangeBg = Color(red: 0.98, green: 0.91, blue: 0.89)
-    let logoutRed = Color(red: 0.88, green: 0.35, blue: 0.35)
-    let logoutRedBg = Color(red: 0.98, green: 0.93, blue: 0.93)
+    
+    @StateObject private var authVM = AuthViewModel()
+    
+    // Data user dari AppStorage — sama dengan yang di-set di ProfileSetup
+    @AppStorage("userName")  private var userName = "User"
+    @AppStorage("userEmail") private var userEmail = ""
+    @AppStorage("userID")    private var userID = ""
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    // State untuk konfirmasi logout
+    @State private var showLogoutAlert = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // 1. Navigation Header
-            HStack {
-
-                
-                Text("Profile")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(darkText)
-                
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 30)
-            
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 32) {
                     
-                    // 2. Profile Info (Avatar, Name, Email)
+                    // MARK: - Profile Info (Avatar, Name, Email)
                     VStack(spacing: 12) {
-                        // Ganti "person.crop.circle.fill" dengan nama gambar aset Anda (misal: Image("baby_avatar"))
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.85)) // Hapus baris ini jika pakai gambar asli
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().stroke(Color(red: 0.90, green: 0.90, blue: 0.92), lineWidth: 4)
-                            )
+                        // Avatar dengan inisial
+                        ZStack {
+                            Circle()
+                                .fill(Color.themePrimaryFaded)
+                                .frame(width: 100, height: 100)
+                            
+                            Text(initials)
+                                .font(.system(size: 36, weight: .bold))
+                                .foregroundColor(.themePrimary)
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.themePrimary.opacity(0.2), lineWidth: 3)
+                        )
                         
                         VStack(spacing: 4) {
-                            Text("Eeyoo BRO")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(darkText)
+                            Text(userName.isEmpty ? "User" : userName)
+                                .font(ThemeFont.title)
+                                .foregroundColor(.textPrimary)
                             
-                            Text(verbatim: "eeyoo@magerin.app")
-                                .font(.subheadline)
-                                .foregroundColor(grayText)
+                            Text(userEmail)
+                                .font(ThemeFont.body)
+                                .foregroundColor(.textSecondary)
                         }
                     }
+                    .padding(.top, 20)
                     
-                    // 3. Preferences Section
+                    // MARK: - Preferences Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("PREFERENCES")
                             .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(darkText)
+                            .foregroundColor(.textPrimary)
                             .tracking(1.5)
                             .padding(.leading, 8)
                         
                         VStack(spacing: 0) {
-                            PreferenceRowView(
-                                icon: "person",
-                                title: "Account Settings"
+                            ProfileRowView(
+                                icon: "person.fill",
+                                title: "Edit Profil",
+                                subtitle: "Ubah nama, umur, pekerjaan"
                             )
                             
                             Divider()
                                 .padding(.horizontal, 20)
                             
-                            PreferenceRowView(
-                                icon: "bell",
-                                title: "Notification Preferences",
-                                subtitle: "Manage reminders & alerts"
+                            ProfileRowView(
+                                icon: "bell.fill",
+                                title: "Pengingat Stretching",
+                                subtitle: "Atur notifikasi setiap 45 menit"
                             )
                             
                             Divider()
                                 .padding(.horizontal, 20)
                             
-                            PreferenceRowView(
-                                icon: "questionmark.circle",
-                                title: "Help & Support"
+                            ProfileRowView(
+                                icon: "questionmark.circle.fill",
+                                title: "Bantuan & Dukungan"
                             )
                         }
-                        .background(Color.white)
-                        .cornerRadius(16)
+                        .background(Color.themeSurface)
+                        .cornerRadius(ThemeStyle.cornerRadius)
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
                     }
                     
-                    // 4. Logout Button
+                    // MARK: - App Info Section
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("TENTANG")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.textPrimary)
+                            .tracking(1.5)
+                            .padding(.leading, 8)
+                        
+                        VStack(spacing: 0) {
+                            ProfileRowView(
+                                icon: "info.circle.fill",
+                                title: "Tentang Heltek",
+                                subtitle: "Versi 1.0.0"
+                            )
+                            
+                            Divider()
+                                .padding(.horizontal, 20)
+                            
+                            ProfileRowView(
+                                icon: "doc.text.fill",
+                                title: "Kebijakan Privasi"
+                            )
+                        }
+                        .background(Color.themeSurface)
+                        .cornerRadius(ThemeStyle.cornerRadius)
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+                    }
+                    
+                    // MARK: - Logout Button
                     Button(action: {
-                        // Aksi Logout
+                        showLogoutAlert = true
                     }) {
                         HStack(spacing: 10) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                                 .font(.system(size: 18, weight: .semibold))
                             Text("Logout")
-                                .font(.headline)
-                                .fontWeight(.bold)
+                                .font(ThemeFont.button)
                         }
-                        .foregroundColor(logoutRed)
+                        .foregroundColor(.alertDestructive)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(logoutRedBg)
-                        .cornerRadius(12)
+                        .background(Color.alertBackground)
+                        .cornerRadius(ThemeStyle.cornerRadius)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(logoutRed.opacity(0.2), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: ThemeStyle.cornerRadius)
+                                .stroke(Color.alertDestructive.opacity(0.2), lineWidth: 1)
                         )
                     }
                     .padding(.top, 10)
@@ -125,21 +147,33 @@ struct ProfileView: View {
                 .padding(.bottom, 40)
             }
         }
-        .background(bgColor.ignoresSafeArea())
+        .background(Color.themeBackground.ignoresSafeArea())
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Logout", isPresented: $showLogoutAlert) {
+            Button("Batal", role: .cancel) {}
+            Button("Logout", role: .destructive) {
+                authVM.logout()
+            }
+        } message: {
+            Text("Apakah kamu yakin ingin keluar dari akun?")
+        }
+    }
+    
+    // MARK: - Inisial dari nama user
+    private var initials: String {
+        let parts = userName.split(separator: " ")
+        let first = parts.first?.prefix(1) ?? "U"
+        let last = parts.count > 1 ? parts.last?.prefix(1) ?? "" : ""
+        return "\(first)\(last)".uppercased()
     }
 }
 
-// MARK: - Subviews
-
-struct PreferenceRowView: View {
+// MARK: - Profile Row View (Reusable)
+struct ProfileRowView: View {
     let icon: String
     let title: String
     var subtitle: String? = nil
-    
-    let darkText = Color(red: 0.08, green: 0.12, blue: 0.18)
-    let grayText = Color(red: 0.58, green: 0.62, blue: 0.68)
-    let orangeIcon = Color(red: 0.93, green: 0.44, blue: 0.24)
-    let lightOrangeBg = Color(red: 0.98, green: 0.91, blue: 0.89)
     
     var body: some View {
         Button(action: {
@@ -148,24 +182,24 @@ struct PreferenceRowView: View {
             HStack(spacing: 16) {
                 // Icon Background
                 Circle()
-                    .fill(lightOrangeBg)
+                    .fill(Color.themePrimaryFaded)
                     .frame(width: 40, height: 40)
                     .overlay(
                         Image(systemName: icon)
-                            .foregroundColor(orangeIcon)
+                            .foregroundColor(.themePrimary)
                             .font(.system(size: 16, weight: .semibold))
                     )
                 
                 // Text Container
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(darkText)
+                        .font(ThemeFont.bodyBold)
+                        .foregroundColor(.textPrimary)
                     
                     if let subtitle = subtitle {
                         Text(subtitle)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(grayText)
+                            .font(ThemeFont.caption)
+                            .foregroundColor(.textSecondary)
                     }
                 }
                 
@@ -174,21 +208,19 @@ struct PreferenceRowView: View {
                 // Chevron Icon
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color(red: 0.75, green: 0.75, blue: 0.80))
+                    .foregroundColor(.textSecondary.opacity(0.5))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            // Latar belakang transparan agar area button bisa di-tap semua
-            .contentShape(Rectangle()) 
+            .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Previews
-
-struct ProfileView_Previews: PreviewProvider {
-    static var previews: some View {
+// MARK: - Preview
+#Preview {
+    NavigationStack {
         ProfileView()
     }
 }

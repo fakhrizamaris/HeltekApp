@@ -10,7 +10,6 @@ import SwiftUI
 struct RegisterView: View {
     
     // State untuk setiap field form
-    @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -23,15 +22,14 @@ struct RegisterView: View {
     @State private var errorMessage = ""
     @State private var showError = false
     
-    // Untuk kembali ke LoginView (dismiss sheet)
+    // Untuk kembali ke LoginView (pop navigation)
     @Environment(\.dismiss) private var dismiss
     
     // Saat ini = true, app otomatis pindah ke MainTabView
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 0) {
                     
                     // MARK: - Header gambar (sama dengan LoginView)
@@ -62,14 +60,6 @@ struct RegisterView: View {
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
-                        
-                        // MARK: - Field: Full Name
-                        FormField(
-                            label: "Full Name",
-                            icon: "person",
-                            placeholder: "Your full name",
-                            text: $fullName
-                        )
                         
                         // MARK: - Field: Email
                         FormField(
@@ -169,7 +159,8 @@ struct RegisterView: View {
                         // MARK: - Tombol Register
                         Button(action: {
                             Task {
-                                await authVM.registerWithEmail(name: fullName, email: email, password: password)
+                                // Nama dikosongkan dulu — akan diisi di ProfileSetupView
+                                await authVM.registerWithEmail(name: "", email: email, password: password)
                             }
                         }) {
                             HStack {
@@ -216,6 +207,7 @@ struct RegisterView: View {
             }
             .background(Color.white.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
@@ -228,7 +220,6 @@ struct RegisterView: View {
                         .font(ThemeFont.bodyBold)
                         .foregroundColor(Color.textPrimary)
                 }
-            }
         }
     }
     
@@ -239,7 +230,6 @@ struct RegisterView: View {
     
     // MARK: - Validasi: semua field sudah diisi dan valid?
     private var formIsValid: Bool {
-        !fullName.isEmpty &&
         !email.isEmpty &&
         password.count >= 8 &&
         password == confirmPassword
@@ -247,17 +237,6 @@ struct RegisterView: View {
     
     // MARK: - Fungsi Register
     private func handleRegister() {
-        // dummy digantikan dengan pemanggilan Task di button action
-        // guard formIsValid else { return }
-        
-        // // Simpan nama dan email user ke AppStorage supaya bisa ditampilkan di HomeView
-        // UserDefaults.standard.set(fullName, forKey: "userName")
-        // UserDefaults.standard.set(email, forKey: "userEmail")
-        
-        // print("✅ Registrasi simulasi berhasil! Masuk sebagai: \(fullName) (\(email))")
-        
-        // // Langsung tandai sudah login, otomatis meluncur ke MainTabView
-        // isLoggedIn = true
     }
 }
 

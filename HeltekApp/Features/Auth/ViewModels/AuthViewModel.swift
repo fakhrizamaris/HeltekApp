@@ -22,6 +22,7 @@ class AuthViewModel: ObservableObject {
     @AppStorage("userName")   var userName = ""
     @AppStorage("userEmail")  var userEmail = ""
     @AppStorage("userID")     var userID = ""
+    @AppStorage("hasCompletedProfile") var hasCompletedProfile = false
     
     // Nonce = string acak untuk keamanan — wajib ada untuk Apple Sign In
     // Analoginya seperti CSRF token di web
@@ -129,11 +130,15 @@ class AuthViewModel: ObservableObject {
             userName  = finalName
             userEmail = finalEmail
             
-            print("✅ Login berhasil! Selamat datang, \(finalName)")
+            // Cek apakah profil sudah lengkap di Firestore
+            let profileDone = await firebase.isProfileCompleted(userID: firebaseUser.uid)
+            hasCompletedProfile = profileDone
+            
+            print("✅ Login berhasil! Selamat datang, \(finalName). Profil lengkap: \(profileDone)")
             
             isLoading = false
             
-            // Pindah ke MainTabView
+            // Pindah ke flow berikutnya (profil setup atau MainTabView)
             isLoggedIn = true
             
         } catch {
@@ -166,11 +171,14 @@ class AuthViewModel: ObservableObject {
             self.userName = name
             self.userEmail = email
             
-            print("✅ Data profil berhasil disimpan ke Firestore. Selamat datang, \(name)")
+            // User baru = profil belum diisi
+            self.hasCompletedProfile = false
+            
+            print("✅ Registrasi berhasil! Selamat datang, \(name). Lanjut isi profil...")
             
             isLoading = false
             
-            // 4. Ubah flag login agar masuk ke MainTabView
+            // 4. Ubah flag login — akan diarahkan ke UserProfileSetupView
             isLoggedIn = true
             
         } catch {
@@ -203,9 +211,13 @@ class AuthViewModel: ObservableObject {
             
             self.userID = firebaseUser.uid
             
+            // Cek apakah profil sudah lengkap
+            let profileDone = await firebase.isProfileCompleted(userID: firebaseUser.uid)
+            self.hasCompletedProfile = profileDone
+            
             isLoading = false
             
-            // 3. Ubah flag login agar masuk ke MainTabView
+            // 3. Ubah flag login — flow selanjutnya tergantung status profil
             isLoggedIn = true
             
         } catch {
@@ -219,6 +231,10 @@ class AuthViewModel: ObservableObject {
         do {
             try Auth.auth().signOut()
             isLoggedIn = false
+            hasCompletedProfile = false
+            userID = ""
+            userName = ""
+            userEmail = ""
             print("👋 Logout berhasil")
         } catch {
             print("❌ Logout gagal: \(error.localizedDescription)")

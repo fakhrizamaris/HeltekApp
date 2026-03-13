@@ -155,17 +155,17 @@ struct HomeView: View {
             .padding(.vertical, 30)
 
             // MARK: - Logout (placeholder)
-            Button(action: {
-                authVM.logout()
-            }) {
-                Text("Logout")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.red)
-                    .cornerRadius(10)
-            }
+//            Button(action: {
+//                authVM.logout()
+//            }) {
+//                Text("Logout")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .padding()
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.red)
+//                    .cornerRadius(10)
+//            }
             .padding(.horizontal, 40)
             .padding(.bottom, 30)
         }
@@ -187,7 +187,7 @@ struct HomeView: View {
         return String(format: "%02d:%02d", minutes, seconds)
     }
 }
+
 #Preview {
     HomeView()
 }
-
