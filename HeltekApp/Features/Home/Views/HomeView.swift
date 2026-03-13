@@ -241,10 +241,10 @@ struct HomeView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12:  return "Selamat Pagi,"
-        case 12..<15: return "Selamat Siang,"
-        case 15..<18: return "Selamat Sore,"
-        default:      return "Selamat Malam,"
+        case 5..<12:  return "Good Morning,"
+        case 12..<17: return "Good Afternoon,"
+        case 17..<21: return "Good Evening,"
+        default:      return "Good Night,"
         }
     }
     

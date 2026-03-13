@@ -81,10 +81,10 @@ struct RegisterView: View {
                                     .foregroundColor(Color.textSecondary)
                                 
                                 if isPasswordVisible {
-                                    TextField("Min. 8 karakter", text: $password)
+                                    TextField("Masukkan password", text: $password)
                                         .font(ThemeFont.body)
                                 } else {
-                                    SecureField("Min. 8 karakter", text: $password)
+                                    SecureField("Masukkan password", text: $password)
                                         .font(ThemeFont.body)
                                 }
                                 
@@ -98,8 +98,33 @@ struct RegisterView: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                    .stroke(
+                                        !password.isEmpty && !isPasswordValid ? Color.orange : Color.gray.opacity(0.2),
+                                        lineWidth: 1
+                                    )
                             )
+                            
+                            // MARK: - Password Requirements Checklist
+                            if !password.isEmpty {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    PasswordRequirementRow(
+                                        text: "Minimal 8 karakter",
+                                        isMet: hasMinLength
+                                    )
+                                    PasswordRequirementRow(
+                                        text: "Mengandung huruf (a-z)",
+                                        isMet: hasLetter
+                                    )
+                                    PasswordRequirementRow(
+                                        text: "Mengandung angka (0-9)",
+                                        isMet: hasNumber
+                                    )
+                                }
+                                .padding(.horizontal, 4)
+                                .padding(.top, 2)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                                .animation(.easeInOut(duration: 0.2), value: password)
+                            }
                         }
                         
                         // MARK: - Field: Confirm Password
@@ -228,15 +253,50 @@ struct RegisterView: View {
         !confirmPassword.isEmpty && password != confirmPassword
     }
     
+    // MARK: - Validasi password individu
+    private var hasMinLength: Bool {
+        password.count >= 8
+    }
+    
+    private var hasLetter: Bool {
+        password.range(of: "[a-zA-Z]", options: .regularExpression) != nil
+    }
+    
+    private var hasNumber: Bool {
+        password.range(of: "[0-9]", options: .regularExpression) != nil
+    }
+    
+    private var isPasswordValid: Bool {
+        hasMinLength && hasLetter && hasNumber
+    }
+    
     // MARK: - Validasi: semua field sudah diisi dan valid?
     private var formIsValid: Bool {
         !email.isEmpty &&
-        password.count >= 8 &&
+        isPasswordValid &&
         password == confirmPassword
     }
     
     // MARK: - Fungsi Register
     private func handleRegister() {
+    }
+}
+
+// MARK: - Password Requirement Row Component
+struct PasswordRequirementRow: View {
+    let text: String
+    let isMet: Bool
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: isMet ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 14))
+                .foregroundColor(isMet ? Color.green : Color.gray.opacity(0.5))
+            
+            Text(text)
+                .font(.system(size: 12))
+                .foregroundColor(isMet ? Color.green.opacity(0.8) : Color.textSecondary)
+        }
     }
 }
 

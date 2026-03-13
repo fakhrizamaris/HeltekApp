@@ -289,18 +289,14 @@ class FirebaseManager: ObservableObject {
         }
     }
     
-    // MARK: - Simpan Detail Profil User (Data Diri Lengkap)
-    // Menyimpan data profil lengkap ke dokumen user yang sama di Firestore
+    // MARK: - Simpan Detail Profil User
+    // Menyimpan nama user ke Firestore
     // merge: true = hanya update field ini, TIDAK hapus totalPoints, createdAt, dll
     func saveUserDetailProfile(profile: UserProfile) async throws {
         let docRef = db.collection(usersCollection).document(profile.id)
         
         try await docRef.setData([
             "fullName":          profile.fullName,
-            "age":               profile.age,
-            "bio":               profile.bio,
-            "occupation":        profile.occupation,
-            "dailySittingHours": profile.dailySittingHours,
             "profileCompleted":  true,
             "updatedAt":         Timestamp(date: Date()),
             // Update juga field 'name' supaya konsisten dengan leaderboard
@@ -308,7 +304,7 @@ class FirebaseManager: ObservableObject {
         ], merge: true)
         try await ensureUserStatsDefaults(userID: profile.id)
         
-        print("✅ Detail profil berhasil disimpan untuk: \(profile.fullName)")
+        print("✅ Profil berhasil disimpan untuk: \(profile.fullName)")
     }
 
     // MARK: - Ensure user stats defaults exist
@@ -323,7 +319,7 @@ class FirebaseManager: ObservableObject {
     }
     
     // MARK: - Ambil Detail Profil User
-    // Analoginya: SELECT fullName, age, bio, occupation, ... FROM users WHERE id = ?
+    // Analoginya: SELECT fullName FROM users WHERE id = ?
     func fetchUserDetailProfile(userID: String) async throws -> UserProfile? {
         let doc = try await db
             .collection(usersCollection)
@@ -339,10 +335,6 @@ class FirebaseManager: ObservableObject {
         return UserProfile(
             id:                userID,
             fullName:          data["fullName"] as? String ?? data["name"] as? String ?? "",
-            age:               data["age"] as? Int ?? 0,
-            bio:               data["bio"] as? String ?? "",
-            occupation:        data["occupation"] as? String ?? "",
-            dailySittingHours: data["dailySittingHours"] as? Int ?? 0,
             profileCompleted:  true,
             createdAt:         (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
             updatedAt:         (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
