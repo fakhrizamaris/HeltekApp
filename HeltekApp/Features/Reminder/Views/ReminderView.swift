@@ -11,6 +11,7 @@ import SwiftUI
 struct ReminderView: View {
     // Menyiapkan fungsi untuk menutup halaman (dismiss)
     @Environment(\.dismiss) var dismiss
+    @Binding var navigateToSession: Bool
     
     // Definisi Warna Kustom (Menyesuaikan palet sebelumnya)
     let bgColor = Color(red: 0.98, green: 0.98, blue: 0.99)
@@ -23,13 +24,11 @@ struct ReminderView: View {
         VStack(spacing: 0) {
             // 1. Header (Tombol Close & Judul)
             HStack {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(darkText)
-                }
+                Image(systemName: "xmark")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(darkText)
+                    .opacity(0)
+                
                 
                 Spacer()
                 
@@ -110,7 +109,10 @@ struct ReminderView: View {
             VStack(spacing: 16) {
                 // Primary Button
                 Button(action: {
-                    // Aksi untuk Start Exercise
+                    dismiss()
+                    DispatchQueue.main.async {
+                        navigateToSession = true
+                    }
                 }) {
                     Text("Start Exercise")
                         .font(.headline)
@@ -141,12 +143,13 @@ struct ReminderView: View {
             .padding(.bottom, 40)
         }
         .background(bgColor.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
     }
 }
 
 // MARK: - Previews
 struct ReminderView_Previews: PreviewProvider {
     static var previews: some View {
-        ReminderView()
+        ReminderView(navigateToSession: .constant(false))
     }
 }

@@ -3,16 +3,21 @@
 //  HeltekApp
 ////  Created by Fakhri Djamaris on 10/03/26.
 //
+//  Created by Fakhri Djamaris on 10/03/26.
+//
 
 import SwiftUI
 import FirebaseCore
 
 @main
 struct HeltekAppApp: App {
-    
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("isLoggedIn") private var isLoggedIn = false
+
+
+
     @AppStorage("hasCompletedProfile") private var hasCompletedProfile = false
+
     
     init() {
         FirebaseApp.configure()

@@ -111,7 +111,6 @@ private struct PlanMetaChip: View {
         .clipShape(Capsule())
     }
 }
-
 private struct CardShadow: ViewModifier {
     func body(content: Content) -> some View {
         ThemeStyle.cardShadow(for: content)
@@ -121,3 +120,4 @@ private struct CardShadow: ViewModifier {
 #Preview {
     ExercisePlanView()
 }
+
