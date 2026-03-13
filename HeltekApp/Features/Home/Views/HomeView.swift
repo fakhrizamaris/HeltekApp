@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var isActive = false
     @State private var streakCount: Int = 0
     @State private var isCountdownPaused = false
+    @State private var timerEndDate: Date?
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     // MARK: - Navigation & Sheet States
@@ -169,9 +170,16 @@ struct HomeView: View {
                         isActive = false
                         isCountdownPaused = false
                         timeRemaining = selectedMinutes * 60
+                        timerEndDate = nil
+                        NotificationManager.shared.cancelTimerNotification()
+                        LiveActivityManager.shared.end()
                     } else {
                         isActive = true
                         isCountdownPaused = false
+                        timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                        NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
+                        let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                        LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
                     }
                 }) {
                     HStack {
@@ -191,6 +199,7 @@ struct HomeView: View {
             }
             .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
             .task {
+                NotificationManager.shared.requestAuthorization()
                 await loadStreakCount()
             }
             
@@ -222,11 +231,21 @@ struct HomeView: View {
             }
             .onReceive(timer) { _ in
                 guard isActive, !isCountdownPaused else { return }
-                
+
+                if let endDate = timerEndDate {
+                    timeRemaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
+                } else {
+                    timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                }
+
                 if timeRemaining > 0 {
-                    timeRemaining -= 1
+                    // Live Activity countdown updates are handled by timerInterval in widget
                 } else {
                     isCountdownPaused = true
+                    timerEndDate = nil
+                    NotificationManager.shared.cancelTimerNotification()
+                    NotificationManager.shared.playAlarmSound()
+                    LiveActivityManager.shared.end()
                     navigateToSuccess = true // Otomatis pindah halaman kalau waktu abis
                 }
             }
@@ -269,6 +288,12 @@ struct HomeView: View {
         navigateToSuccess = false
         navigateToSession = false
         didCompleteSession = false
+        if isActive {
+            timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+            NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
+            let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+            LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
+        }
     }
 }
 

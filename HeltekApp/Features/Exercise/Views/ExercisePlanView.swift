@@ -62,7 +62,6 @@ private struct ExercisePlanCard: View {
                 }
 
                 HStack(spacing: 12) {
-                    PlanMetaChip(title: "\(plan.calories) kcal", iconName: "flame.fill")
                     PlanMetaChip(title: plan.targetArea, iconName: "figure.strengthtraining.traditional")
 
                     Spacer(minLength: 0)
@@ -120,4 +119,3 @@ private struct CardShadow: ViewModifier {
 #Preview {
     ExercisePlanView()
 }
-
