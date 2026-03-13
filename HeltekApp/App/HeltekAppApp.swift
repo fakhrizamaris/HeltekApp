@@ -8,20 +8,25 @@
 
 import SwiftUI
 import FirebaseCore
+import TipKit
 
 @main
 struct HeltekAppApp: App {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("isLoggedIn") private var isLoggedIn = false
-
-
-
+    
+    
+    
     @AppStorage("hasCompletedProfile") private var hasCompletedProfile = false
-
+    
     
     init() {
         FirebaseApp.configure()
-    }    
+        try? Tips.configure([
+            .displayFrequency(.immediate),
+            .datastoreLocation(.applicationDefault)
+        ])
+    }
     var body: some Scene {
         WindowGroup {
             if !hasSeenOnboarding {

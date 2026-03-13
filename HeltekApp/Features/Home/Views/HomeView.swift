@@ -1,23 +1,252 @@
 import SwiftUI
 import Combine
+import TipKit
+
+// MARK: - Spotlight Coach Marks System
+
+/// Setiap step walkthrough membawa data: ID elemen, frame global, judul & deskripsi.
+struct WalkthroughStep: Identifiable, Equatable {
+    let id: Int
+    let title: String
+    let desc: String
+    /// Apakah cutout-nya berbentuk lingkaran (Circle) atau rounded rect
+    let isCircle: Bool
+    /// Padding tambahan di luar frame elemen agar cutout lebih leluasa
+    var padding: CGFloat = 16
+}
+
+/// PreferenceKey untuk mengumpulkan frame tiap elemen target dari seluruh view tree.
+struct SpotlightFrameKey: PreferenceKey {
+    typealias Value = [Int: CGRect]
+    static var defaultValue: [Int: CGRect] = [:]
+    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+/// Modifier untuk melapor frame ke PreferenceKey.
+struct SpotlightFrameModifier: ViewModifier {
+    let stepID: Int
+    func body(content: Content) -> some View {
+        content
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .preference(
+                            key: SpotlightFrameKey.self,
+                            value: [stepID: geo.frame(in: .global)]
+                        )
+                }
+            )
+    }
+}
+
+extension View {
+    /// Tandai view ini sebagai target spotlight untuk step tertentu.
+    func spotlightTarget(stepID: Int) -> some View {
+        modifier(SpotlightFrameModifier(stepID: stepID))
+    }
+}
+
+// MARK: - Spotlight Mask Shape
+
+/// Shape yang menggambar rect penuh lalu "melubangi" area cutout dengan even-odd fill rule.
+struct SpotlightMaskShape: Shape {
+    var rect: CGRect
+    var cornerRadius: CGFloat
+    var padding: CGFloat
+
+    /// Animatable data agar SwiftUI bisa interpolasi cutout saat berpindah step.
+    var animatableData: AnimatablePair<AnimatablePair<CGFloat, CGFloat>, AnimatablePair<CGFloat, CGFloat>> {
+        get {
+            AnimatablePair(
+                AnimatablePair(rect.origin.x, rect.origin.y),
+                AnimatablePair(rect.size.width, rect.size.height)
+            )
+        }
+        set {
+            rect = CGRect(
+                x: newValue.first.first,
+                y: newValue.first.second,
+                width: newValue.second.first,
+                height: newValue.second.second
+            )
+        }
+    }
+
+    func path(in bounds: CGRect) -> Path {
+        var path = Path()
+        // Seluruh layar sebagai background gelap
+        path.addRect(bounds)
+        // Cutout — menggunakan padding agar sedikit lebih besar dari elemen
+        let cutout = rect.insetBy(dx: -padding, dy: -padding)
+        if cornerRadius >= cutout.height / 2 {
+            // Bentuk lingkaran
+            path.addEllipse(in: cutout)
+        } else {
+            path.addRoundedRect(in: cutout, cornerSize: CGSize(width: cornerRadius, height: cornerRadius))
+        }
+        return path
+    }
+}
+
+// MARK: - Spotlight Overlay View
+
+struct SpotlightOverlayView: View {
+    let steps: [WalkthroughStep]
+    let currentStepID: Int
+    let frames: [Int: CGRect]
+    let onNext: () -> Void
+
+    private var currentStep: WalkthroughStep? {
+        steps.first { $0.id == currentStepID }
+    }
+
+    private var currentFrame: CGRect {
+        guard let step = currentStep, let frame = frames[step.id] else {
+            return .zero
+        }
+        return frame
+    }
+
+    private var tooltipAbove: Bool {
+        // Tampilkan tooltip di bawah elemen jika elemen berada di top-half layar
+        let screenH = UIScreen.main.bounds.height
+        return currentFrame.midY > screenH / 2
+    }
+
+    var body: some View {
+        if let step = currentStep, currentFrame != .zero {
+            ZStack {
+                // MARK: Dimmed Mask with Cutout
+                SpotlightMaskShape(
+                    rect: currentFrame,
+                    cornerRadius: step.isCircle ? currentFrame.height / 2 : 20,
+                    padding: step.padding
+                )
+                .fill(Color.black.opacity(0.72), style: FillStyle(eoFill: true))
+                .ignoresSafeArea()
+                .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                .onTapGesture {
+                    onNext()
+                }
+
+                // MARK: Glowing Ring Around Cutout
+                let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
+                if step.isCircle {
+                    Circle()
+                        .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                        .frame(width: cutoutRect.width, height: cutoutRect.height)
+                        .position(x: cutoutRect.midX, y: cutoutRect.midY)
+                        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                } else {
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                        .frame(width: cutoutRect.width, height: cutoutRect.height)
+                        .position(x: cutoutRect.midX, y: cutoutRect.midY)
+                        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                }
+
+                // MARK: Tooltip Card
+                tooltipCard(step: step)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: tooltipAbove ? .bottom : .top)),
+                        removal: .opacity
+                    ))
+                    .id(step.id) // force re-render & transition on step change
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func tooltipCard(step: WalkthroughStep) -> some View {
+        let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
+        let tooltipGap: CGFloat = 20
+        let tooltipMaxWidth: CGFloat = UIScreen.main.bounds.width - 48
+        let cardY: CGFloat = tooltipAbove
+            ? cutoutRect.minY - tooltipGap - 90   // atas elemen
+            : cutoutRect.maxY + tooltipGap + 60   // bawah elemen
+
+        VStack(spacing: 12) {
+            // Arrow indicator pointing toward elemen
+            Image(systemName: tooltipAbove ? "chevron.down" : "chevron.up")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255))
+
+            Text(step.title)
+                .font(.system(.headline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+
+            Text(step.desc)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.85))
+                .multilineTextAlignment(.center)
+
+            Divider().background(Color.white.opacity(0.2))
+
+            // Step counter + CTA
+            HStack {
+                Text("\(step.id) / 4")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.5))
+                Spacer()
+                Button(action: onNext) {
+                    HStack(spacing: 4) {
+                        Text(step.id < 4 ? "Next" : "Got it!")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        if step.id < 4 {
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule()
+                            .fill(Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255))
+                    )
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: tooltipMaxWidth)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 8)
+        .position(x: UIScreen.main.bounds.width / 2, y: cardY)
+        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+    }
+}
+
+// MARK: - HomeView
 
 struct HomeView: View {
     // MARK: - ViewModels & AppStorage
     @StateObject private var authVM = AuthViewModel()
     @AppStorage("userName") private var userName = "User"
-    
+    @AppStorage("hasSeenWalkthrough") private var hasSeenWalkthrough = false
+
     // MARK: - UI Colors
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
     let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
-    
+
     // MARK: - Timer States
-    @State private var timeRemaining = 1800 // Default 30 menit
+    @State private var timeRemaining = 1800
     @State private var isActive = false
     @State private var streakCount: Int = 0
     @State private var isCountdownPaused = false
     @State private var timerEndDate: Date?
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    
+
     // MARK: - Navigation & Sheet States
     @State private var showProfile = false
     @State private var showingBottomSheet = false
@@ -25,185 +254,275 @@ struct HomeView: View {
     @State private var navigateToSuccess = false
     @State private var navigateToSession = false
     @State private var didCompleteSession = false
-    
+
+    // MARK: - Walkthrough States
+    /// 0 = tidak aktif, 1–4 = step aktif
+    @State private var currentWalkthroughStep = 0
+    /// Menyimpan frame global tiap elemen target
+    @State private var spotlightFrames: [Int: CGRect] = [:]
+
+    /// Definisi semua step walkthrough
+    private let walkthroughSteps: [WalkthroughStep] = [
+        WalkthroughStep(id: 1, title: "Your Profile",    desc: "Tap here to view and edit your profile settings.",                        isCircle: false, padding: 12),
+        WalkthroughStep(id: 2, title: "Adjust Timer",    desc: "Tap the circle to set how often you want to be reminded to move.",        isCircle: true,  padding: 20),
+        WalkthroughStep(id: 3, title: "Hatch & Evolve!", desc: "Keep your streak alive to hatch the egg and watch your pet evolve.",      isCircle: false, padding: 14),
+        WalkthroughStep(id: 4, title: "Ready to Focus?", desc: "Tap here to start the timer and begin your focus session.",               isCircle: false, padding: 10),
+    ]
+
+    // MARK: - Pet Evolution Logic
+    private var daysInMonth: Int {
+        Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
+    }
+
+    private var milestones: [Int] {
+        [daysInMonth / 3, (daysInMonth * 2) / 3]
+    }
+
+    private var currentPetImage: String {
+        if streakCount >= milestones[1] { return "sun.max.trianglebadge.exclamationmark.fill" }
+        if streakCount >= milestones[0] { return "sun.max.fill" }
+        return "sun.horizon.fill"
+    }
+
+    private var petStatusMessage: String {
+        if streakCount >= milestones[1] { return "Your pet has fully evolved! You're unstoppable." }
+        if streakCount >= milestones[0] { return "Your pet is growing! Keep the streak alive." }
+        return "Your pet is hatching! Keep moving."
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // MARK: - Header (Clickable → Profile)
-                HStack {
-                    Button {
-                        showProfile = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Circle()
-                                .fill(lightOrange)
-                                .frame(width: 45, height: 45)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .foregroundColor(themeOrange)
-                                )
-                            
-                            VStack(alignment: .leading) {
-                                Text(greeting)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                Text(userName.isEmpty ? "User" : userName)
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.primary)
-                            }
-                            
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "bell")
-                        .font(.title3)
-                        .padding(10)
-                        .background(Circle().fill(Color.white).shadow(radius: 1))
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-                
-                // MARK: - Content Section
-                VStack(spacing: 30) {
+            ZStack {
+                // MARK: - Main Content
+                VStack(spacing: 0) {
+                    // MARK: Header
                     HStack {
-                        Text("Next Movement")
-                            .font(.title2)
-                            .fontWeight(.bold)
+                        Button {
+                            showProfile = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(lightOrange)
+                                    .frame(width: 45, height: 45)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .foregroundColor(themeOrange)
+                                    )
+
+                                VStack(alignment: .leading) {
+                                    Text(greeting)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                    Text(userName.isEmpty ? "User" : userName)
+                                        .font(.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                }
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        // ← Spotlight target step 1
+                        .spotlightTarget(stepID: 1)
+
                         Spacer()
+
+                        Image(systemName: "bell")
+                            .font(.title3)
+                            .padding(10)
+                            .background(Circle().fill(Color.white).shadow(radius: 1))
                     }
                     .padding(.horizontal, 24)
-                    .padding(.top, 40)
-                    
-                    // Timer Circle Button
-                    Button(action: {
-                        showingBottomSheet = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .stroke(lightOrange, lineWidth: 15)
-                                .frame(width: 250, height: 250)
-                            
-                            // Progress Indicator
-                            Circle()
-                                .trim(from: 0, to: CGFloat(timeRemaining) / CGFloat(selectedMinutes > 0 ? selectedMinutes * 60 : 1800))
-                                .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
-                                .frame(width: 260, height: 260)
-                                .rotationEffect(.degrees(-90))
-                                .animation(.easeInOut, value: timeRemaining)
-                            
-                            Text(timeString(from: timeRemaining))
-                                .font(.system(size: 70, weight: .bold, design: .rounded))
-                                .foregroundColor(themeOrange)
-                        }
-                    }.buttonStyle(PlainButtonStyle())
-                    
-                    Text("Time to stand up and stretch those legs!")
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(white: 0.4))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                        .padding(.vertical, 20)
-                }
-                
-                // MARK: - Streak Card
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 15) {
-                        ZStack {
-                            Circle()
-                                .fill(lightOrange)
-                                .frame(width: 50, height: 50)
-                            Image(systemName: "egg.fill") // Placeholder icon
-                                .foregroundColor(themeOrange)
-                        }
-                        
-                        VStack(alignment: .leading) {
-                            Text("CURRENT STREAK")
-                                .font(.caption2)
+                    .padding(.top, 20)
+
+                    // MARK: Content Section
+                    VStack(spacing: 30) {
+                        HStack {
+                            Text("Next Movement")
+                                .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.gray)
-                            
-                            // Progress Bar
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(Color(.systemGray6))
-                                        .frame(height: 8)
-                                    Capsule()
-                                        .fill(themeOrange)
-                                        .frame(width: geo.size.width * 0.8, height: 8)
-                                }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 40)
+
+                        // Timer Circle Button — spotlight target step 2
+                        Button(action: {
+                            showingBottomSheet = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .stroke(lightOrange, lineWidth: 15)
+                                    .frame(width: 250, height: 250)
+
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(timeRemaining) / CGFloat(selectedMinutes > 0 ? selectedMinutes * 60 : 1800))
+                                    .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                                    .frame(width: 260, height: 260)
+                                    .rotationEffect(.degrees(-90))
+                                    .animation(.easeInOut, value: timeRemaining)
+
+                                Text(timeString(from: timeRemaining))
+                                    .font(.system(size: 70, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeOrange)
                             }
-                            .frame(height: 8)
                         }
-                        
-                        VStack(alignment: .trailing) {
-                        Text("\(streakCount) Days")
-                                .font(.title3)
-                                .fontWeight(.black)
+                        .buttonStyle(PlainButtonStyle())
+                        // ← Spotlight target step 2
+                        .spotlightTarget(stepID: 2)
+
+                        Text("Time to stand up and stretch those legs!")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color(white: 0.4))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                            .padding(.vertical, 20)
+                    }
+
+                    // MARK: Streak Card — spotlight target step 3
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 15) {
+                            ZStack {
+                                Circle()
+                                    .fill(lightOrange)
+                                    .frame(width: 50, height: 50)
+                                Image(systemName: currentPetImage)
+                                    .foregroundColor(themeOrange)
+                                    .animation(.spring(), value: currentPetImage)
+                            }
+
+                            VStack(alignment: .leading) {
+                                Text("CURRENT STREAK")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.gray)
+
+                                GeometryReader { geo in
+                                    let circleSize: CGFloat = 16
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(Color(.systemGray6))
+                                            .frame(height: 8)
+
+                                        Capsule()
+                                            .fill(themeOrange)
+                                            .frame(width: min(geo.size.width, geo.size.width * CGFloat(streakCount) / CGFloat(daysInMonth)), height: 8)
+
+                                        ForEach(milestones, id: \.self) { milestone in
+                                            VStack(spacing: 2) {
+                                                Circle()
+                                                    .fill(streakCount >= milestone ? themeOrange : Color(.systemGray5))
+                                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                                    .frame(width: circleSize, height: circleSize)
+
+                                                Text("\(milestone)")
+                                                    .font(.system(size: 8, weight: .bold))
+                                                    .foregroundColor(streakCount >= milestone ? themeOrange : .gray)
+                                            }
+                                            .offset(
+                                                x: (geo.size.width * CGFloat(milestone) / CGFloat(daysInMonth)) - (circleSize / 2),
+                                                y: 6
+                                            )
+                                        }
+                                    }
+                                    .frame(height: circleSize)
+                                }
+                                .frame(height: 16)
+                            }
+
+                            VStack(alignment: .trailing) {
+                                Text("\(streakCount) Days")
+                                    .font(.title3)
+                                    .fontWeight(.black)
+                            }
                         }
+
+                        Text(petStatusMessage)
+                            .font(.caption)
+                            .foregroundColor(themeOrange)
+                            .fontWeight(.medium)
+                            .animation(.easeInOut, value: petStatusMessage)
                     }
-                    
-                    Text("Your pet is hatching! Keep moving.")
-                        .font(.caption)
-                        .foregroundColor(themeOrange)
-                        .fontWeight(.medium)
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+                    )
+                    .padding(.horizontal, 24)
+                    // ← Spotlight target step 3
+                    .spotlightTarget(stepID: 3)
+
+                    // MARK: Start Button — spotlight target step 4
+                    Button(action: {
+                        if isActive {
+                            isActive = false
+                            isCountdownPaused = false
+                            timeRemaining = selectedMinutes * 60
+                            timerEndDate = nil
+                            NotificationManager.shared.cancelTimerNotification()
+                            LiveActivityManager.shared.end()
+                        } else {
+                            isActive = true
+                            isCountdownPaused = false
+                            timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                            NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
+                            let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                            LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: isActive ? "stop.fill" : "bolt.fill")
+                            Text(isActive ? "Stop" : "Start Focus")
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
+                        .cornerRadius(15)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 30)
+                    // ← Spotlight target step 4
+                    .spotlightTarget(stepID: 4)
+
+                } // VStack utama
+                .background(Color(white: 0.98).ignoresSafeArea())
+
+                // MARK: - Spotlight Overlay
+                if currentWalkthroughStep > 0 {
+                    SpotlightOverlayView(
+                        steps: walkthroughSteps,
+                        currentStepID: currentWalkthroughStep,
+                        frames: spotlightFrames,
+                        onNext: nextWalkthroughStep
+                    )
+                    .ignoresSafeArea()
+                    .zIndex(10)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.25), value: currentWalkthroughStep)
                 }
-                .padding(20)
-                .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-                )
-                .padding(.horizontal, 24)
-                
-                // MARK: - Start Button
-                Button(action: {
-                    if isActive {
-                        isActive = false
-                        isCountdownPaused = false
-                        timeRemaining = selectedMinutes * 60
-                        timerEndDate = nil
-                        NotificationManager.shared.cancelTimerNotification()
-                        LiveActivityManager.shared.end()
-                    } else {
-                        isActive = true
-                        isCountdownPaused = false
-                        timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
-                        NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
-                        let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
-                        LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: isActive ? "stop.fill" : "bolt.fill")
-                        Text(isActive ? "Stop" : "Start Focus")
-                            .fontWeight(.bold)
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isActive ? themeOrange.opacity(0.75) : themeOrange)
-                    .cornerRadius(15)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 30)
-                
+
+            } // ZStack
+            // Kumpulkan semua frame dari PreferenceKey
+            .onPreferenceChange(SpotlightFrameKey.self) { frames in
+                spotlightFrames = frames
             }
-            .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
             .task {
                 NotificationManager.shared.requestAuthorization()
                 await loadStreakCount()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    if !hasSeenWalkthrough {
+                        withAnimation { currentWalkthroughStep = 1 }
+                    }
+                }
             }
-            
-            // MARK: - Modifiers & Destinations
             .sheet(isPresented: $showingBottomSheet) {
                 ReminderSheetView(
                     isPresented: $showingBottomSheet,
@@ -231,22 +550,18 @@ struct HomeView: View {
             }
             .onReceive(timer) { _ in
                 guard isActive, !isCountdownPaused else { return }
-
                 if let endDate = timerEndDate {
                     timeRemaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
                 } else {
                     timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
                 }
-
-                if timeRemaining > 0 {
-                    // Live Activity countdown updates are handled by timerInterval in widget
-                } else {
+                if timeRemaining <= 0 {
                     isCountdownPaused = true
                     timerEndDate = nil
                     NotificationManager.shared.cancelTimerNotification()
                     NotificationManager.shared.playAlarmSound()
                     LiveActivityManager.shared.end()
-                    navigateToSuccess = true // Otomatis pindah halaman kalau waktu abis
+                    navigateToSuccess = true
                 }
             }
             .onChange(of: didCompleteSession) { _, newValue in
@@ -255,8 +570,20 @@ struct HomeView: View {
             }
         } // NavigationStack
     }
-    
-    // MARK: - Helper Functions
+
+    // MARK: - Walkthrough Navigation
+    private func nextWalkthroughStep() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            if currentWalkthroughStep < 4 {
+                currentWalkthroughStep += 1
+            } else {
+                currentWalkthroughStep = 0
+                hasSeenWalkthrough = true
+            }
+        }
+    }
+
+    // MARK: - Helper Computed Properties
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -266,7 +593,7 @@ struct HomeView: View {
         default:      return "Good Night,"
         }
     }
-    
+
     func timeString(from totalSeconds: Int) -> String {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
@@ -298,31 +625,28 @@ struct HomeView: View {
 }
 
 // MARK: - Bottom Sheet View
+
 struct ReminderSheetView: View {
     @Binding var isPresented: Bool
     @Binding var selectedMinutes: Int
     @Binding var timeRemaining: Int
-    
+
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
     let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
-    
-    // Interval 5, 10, 15... sampai 120 menit
-    // TODO: balikin intervalnya
     let intervalOptions = Array(stride(from: 1, through: 120, by: 1))
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Text("Set Reminder Interval")
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(.top, 20)
-            
+
             Text("Choose how often you want to be reminded\nto move")
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-            
-            // Picker Roda
+
             Picker("Interval", selection: $selectedMinutes) {
                 ForEach(intervalOptions, id: \.self) { minute in
                     Text("\(minute) min").tag(minute)
@@ -330,8 +654,7 @@ struct ReminderSheetView: View {
             }
             .pickerStyle(.wheel)
             .frame(height: 150)
-            
-            // Tombol Set Time
+
             Button(action: {
                 timeRemaining = selectedMinutes * 60
                 isPresented = false
@@ -345,8 +668,7 @@ struct ReminderSheetView: View {
                     .cornerRadius(15)
             }
             .padding(.horizontal, 24)
-            
-            // Tombol Cancel
+
             Button(action: {
                 isPresented = false
             }) {
@@ -361,11 +683,12 @@ struct ReminderSheetView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 20)
         }
-        .background(Color(white: 0.98).edgesIgnoringSafeArea(.bottom))
+        .background(Color(white: 0.98).ignoresSafeArea(.container, edges: .bottom))
     }
 }
 
 // MARK: - Preview
+
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
