@@ -29,6 +29,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Leaderboard", systemImage: "trophy")
                 }
+
         }
         .tint(Color.themePrimary)
     }

@@ -199,6 +199,31 @@ struct HomeView: View {
                         }
                     }
         }
+        .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
+        .onReceive(timer) { _ in
+                    guard isActive else { return }
+                    
+                    if timeRemaining > 0 {
+                        timeRemaining -= 1
+                    } else {
+                        isActive = false
+                    }
+                }
+        .navigationDestination(isPresented: $showProfile) {
+            ProfileView()
+        }
+        } // NavigationStack
+    }
+    
+    // Greeting berdasarkan waktu
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:  return "Selamat Pagi,"
+        case 12..<15: return "Selamat Siang,"
+        case 15..<18: return "Selamat Sore,"
+        default:      return "Selamat Malam,"
+        }
     }
     
     func timeString(from totalSeconds: Int) -> String {
