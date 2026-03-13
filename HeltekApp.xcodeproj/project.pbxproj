@@ -10,10 +10,40 @@
 		4183A67F2F61731000E26010 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A67E2F61731000E26010 /* FirebaseAuth */; };
 		4183A6812F61731000E26010 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4183A6802F61731000E26010 /* FirebaseFirestore */; };
 		41AE1DC12F624996004B53FE /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 41AE1DC02F624996004B53FE /* FirebaseAnalytics */; };
+		46DCCCDD2F643D7900C3EDF3 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46DCCCDC2F643D7900C3EDF3 /* WidgetKit.framework */; };
+		46DCCCDF2F643D7900C3EDF3 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46DCCCDE2F643D7900C3EDF3 /* SwiftUI.framework */; };
+		46DCCCEE2F643D7A00C3EDF3 /* StretchWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 46DCCCDB2F643D7900C3EDF3 /* StretchWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		46DCCCEC2F643D7A00C3EDF3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 41CD120B2F603FBB00E91BC9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 46DCCCDA2F643D7900C3EDF3;
+			remoteInfo = StretchWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		46DCCCF32F643D7A00C3EDF3 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				46DCCCEE2F643D7A00C3EDF3 /* StretchWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		41CD12132F603FBB00E91BC9 /* HeltekApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HeltekApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		46DCCCDB2F643D7900C3EDF3 /* StretchWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StretchWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		46DCCCDC2F643D7900C3EDF3 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		46DCCCDE2F643D7900C3EDF3 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -24,6 +54,13 @@
 			);
 			target = 41CD12122F603FBB00E91BC9 /* HeltekApp */;
 		};
+		46DCCCF22F643D7A00C3EDF3 /* Exceptions for "StretchWidget" folder in "StretchWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 46DCCCDA2F643D7900C3EDF3 /* StretchWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +70,14 @@
 				41CD12202F603FBC00E91BC9 /* Exceptions for "HeltekApp" folder in "HeltekApp" target */,
 			);
 			path = HeltekApp;
+			sourceTree = "<group>";
+		};
+		46DCCCE02F643D7900C3EDF3 /* StretchWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				46DCCCF22F643D7A00C3EDF3 /* Exceptions for "StretchWidget" folder in "StretchWidgetExtension" target */,
+			);
+			path = StretchWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -48,12 +93,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		46DCCCD82F643D7900C3EDF3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				46DCCCDF2F643D7900C3EDF3 /* SwiftUI.framework in Frameworks */,
+				46DCCCDD2F643D7900C3EDF3 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		41AE1DBF2F624996004B53FE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				46DCCCDC2F643D7900C3EDF3 /* WidgetKit.framework */,
+				46DCCCDE2F643D7900C3EDF3 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -62,8 +118,10 @@
 			isa = PBXGroup;
 			children = (
 				41CD12152F603FBB00E91BC9 /* HeltekApp */,
+				46DCCCE02F643D7900C3EDF3 /* StretchWidget */,
 				41AE1DBF2F624996004B53FE /* Frameworks */,
 				41CD12142F603FBB00E91BC9 /* Products */,
+				46DCCCD52F643C4000C3EDF3 /* LiveActivityWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -71,8 +129,16 @@
 			isa = PBXGroup;
 			children = (
 				41CD12132F603FBB00E91BC9 /* HeltekApp.app */,
+				46DCCCDB2F643D7900C3EDF3 /* StretchWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		46DCCCD52F643C4000C3EDF3 /* LiveActivityWidget */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = LiveActivityWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -85,10 +151,12 @@
 				41CD120F2F603FBB00E91BC9 /* Sources */,
 				41CD12102F603FBB00E91BC9 /* Frameworks */,
 				41CD12112F603FBB00E91BC9 /* Resources */,
+				46DCCCF32F643D7A00C3EDF3 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				46DCCCED2F643D7A00C3EDF3 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				41CD12152F603FBB00E91BC9 /* HeltekApp */,
@@ -103,6 +171,28 @@
 			productReference = 41CD12132F603FBB00E91BC9 /* HeltekApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		46DCCCDA2F643D7900C3EDF3 /* StretchWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 46DCCCEF2F643D7A00C3EDF3 /* Build configuration list for PBXNativeTarget "StretchWidgetExtension" */;
+			buildPhases = (
+				46DCCCD72F643D7900C3EDF3 /* Sources */,
+				46DCCCD82F643D7900C3EDF3 /* Frameworks */,
+				46DCCCD92F643D7900C3EDF3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				46DCCCE02F643D7900C3EDF3 /* StretchWidget */,
+			);
+			name = StretchWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = StretchWidgetExtension;
+			productReference = 46DCCCDB2F643D7900C3EDF3 /* StretchWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -114,6 +204,9 @@
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					41CD12122F603FBB00E91BC9 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					46DCCCDA2F643D7900C3EDF3 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -136,12 +229,20 @@
 			projectRoot = "";
 			targets = (
 				41CD12122F603FBB00E91BC9 /* HeltekApp */,
+				46DCCCDA2F643D7900C3EDF3 /* StretchWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		41CD12112F603FBB00E91BC9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		46DCCCD92F643D7900C3EDF3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -158,7 +259,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		46DCCCD72F643D7900C3EDF3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		46DCCCED2F643D7A00C3EDF3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 46DCCCDA2F643D7900C3EDF3 /* StretchWidgetExtension */;
+			targetProxy = 46DCCCEC2F643D7A00C3EDF3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		41CD12222F603FBC00E91BC9 /* Debug */ = {
@@ -348,6 +464,66 @@
 			};
 			name = Release;
 		};
+		46DCCCF02F643D7A00C3EDF3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 878Q92457C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StretchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StretchWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.HeltekApp.StretchWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		46DCCCF12F643D7A00C3EDF3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 878Q92457C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StretchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StretchWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.HeltekApp.StretchWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -365,6 +541,15 @@
 			buildConfigurations = (
 				41CD12222F603FBC00E91BC9 /* Debug */,
 				41CD12232F603FBC00E91BC9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		46DCCCEF2F643D7A00C3EDF3 /* Build configuration list for PBXNativeTarget "StretchWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				46DCCCF02F643D7A00C3EDF3 /* Debug */,
+				46DCCCF12F643D7A00C3EDF3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
