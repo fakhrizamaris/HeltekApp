@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Charts
 
 @MainActor
 struct StatsView: View {
@@ -31,6 +32,11 @@ struct StatsView: View {
             .background(Color.themeBackground)
             .navigationTitle("Your Progress")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                Task {
+                    await viewModel.load()
+                }
+            }
             .sheet(isPresented: $viewModel.isCalendarPresented) {
                 CalendarSheetView(viewModel: viewModel)
                     .presentationDetents([.height(520)])
@@ -71,12 +77,11 @@ struct StatsView: View {
                 }
             }
 
-            StatsBarChart(entries: viewModel.chartEntries, animateTrigger: chartAnimationID)
+            StatsLineChart(entries: viewModel.chartEntries, animateTrigger: chartAnimationID)
 
             HStack(spacing: 16) {
                 Spacer(minLength: 0)
                 LegendItem(color: Color.themePrimary, title: "Active")
-                LegendItem(color: Color.themePrimary.opacity(0.2), title: "Sedentary")
                 Spacer(minLength: 0)
             }
         }
@@ -132,53 +137,45 @@ struct StatsView: View {
     }
 }
 
-private struct StatsBarChart: View {
-    let entries: [StatsBarEntry]
+private struct StatsLineChart: View {
+    let entries: [StatsChartEntry]
     let animateTrigger: UUID
 
-    private var maxValue: Int {
-        entries.map { max($0.activeMinutes, $0.sedentaryMinutes) }.max() ?? 1
-    }
-
     var body: some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            ForEach(entries) { entry in
-                VStack(spacing: 6) {
-                    HStack(alignment: .bottom, spacing: 4) {
-                        BarView(value: entry.activeMinutes, maxValue: maxValue, color: Color.themePrimary)
-                        BarView(value: entry.sedentaryMinutes, maxValue: maxValue, color: Color.themePrimary.opacity(0.2))
-                    }
-                    Text(entry.label)
-                        .font(ThemeFont.caption)
-                        .foregroundColor(.textSecondary)
-                }
-                .frame(maxWidth: .infinity)
+        Chart(entries) { entry in
+            LineMark(
+                x: .value("Date", entry.label),
+                y: .value("Minutes", entry.activeMinutes)
+            )
+            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+            .foregroundStyle(Color.themePrimary)
+            .symbol {
+                Circle()
+                    .fill(Color.themePrimary)
+                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    .frame(width: 10, height: 10)
             }
+            
+            AreaMark(
+                x: .value("Date", entry.label),
+                y: .value("Minutes", entry.activeMinutes)
+            )
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [Color.themePrimary.opacity(0.3), Color.clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+        .chartXAxis {
+            AxisMarks()
         }
         .frame(height: 140)
         .animation(.easeInOut(duration: 0.3), value: animateTrigger)
-    }
-}
-
-private struct BarView: View {
-    let value: Int
-    let maxValue: Int
-    let color: Color
-
-    private var barHeight: CGFloat {
-        guard maxValue > 0 else { return 0 }
-        return CGFloat(value) / CGFloat(maxValue) * 110
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(color)
-                .frame(width: 10, height: barHeight)
-
-        }
-        .frame(height: 110, alignment: .bottom)
     }
 }
 

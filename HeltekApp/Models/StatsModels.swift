@@ -15,11 +15,10 @@ struct StatsSummaryCard: Identifiable, Hashable {
     let systemImageName: String
 }
 
-struct StatsBarEntry: Identifiable, Hashable {
+struct StatsChartEntry: Identifiable, Hashable {
     let id = UUID()
     let label: String
     let activeMinutes: Int
-    let sedentaryMinutes: Int
 }
 
 struct StreakHistoryItem: Identifiable, Hashable {
