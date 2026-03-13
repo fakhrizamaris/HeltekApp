@@ -141,6 +141,7 @@ struct ReminderView: View {
             .padding(.bottom, 40)
         }
         .background(bgColor.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
     }
 }
 
