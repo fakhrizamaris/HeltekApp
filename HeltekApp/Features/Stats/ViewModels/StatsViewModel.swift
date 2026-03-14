@@ -30,8 +30,8 @@ final class StatsViewModel: ObservableObject {
     private let calendar = Calendar.current
     private var cancellables = Set<AnyCancellable>()
 
-    init(repository: StatsRepository = FirebaseStatsRepository()) {
-        self.repository = repository
+    init(repository: StatsRepository? = nil) {
+        self.repository = repository ?? FirebaseStatsRepository()
         
         $selectedPeriod
             .dropFirst()

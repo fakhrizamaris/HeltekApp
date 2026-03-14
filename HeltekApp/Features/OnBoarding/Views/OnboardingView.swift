@@ -177,131 +177,126 @@ struct OnboardingPageView: View {
     let page: OnboardingPage
     
     var body: some View {
-        VStack(spacing: 0) {
-            
-            if page.isSplash {
-                // MARK: - Splash Screen
-                ZStack {
-                    Color.white.ignoresSafeArea()
-                    
-                    // Blob peach kanan atas
-                    Circle()
-                        .fill(Color(hex: "FFCBA4").opacity(0.5))
-                        .frame(width: 280, height: 280)
-                        .blur(radius: 60)
-                        .offset(x: 60, y: -320)
-                    
-                    // Blob peach kiri bawah
-                    Circle()
-                        .fill(Color(hex: "FFCBA4").opacity(0.5))
-                        .frame(width: 280, height: 280)
-                        .blur(radius: 60)
-                        .offset(x: -60, y: 320)
-                    
-                    VStack(spacing: 16) {
-                        // Logo card putih dengan shadow
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(Color.white)
-                                .frame(width: 110, height: 110)
-                                .shadow(
-                                    color: Color.black.opacity(0.12),
-                                    radius: 20, x: 0, y: 8
-                                )
+        GeometryReader { geometry in
+            let screenHeight = geometry.size.height
+            VStack(spacing: 0) {
+                
+                if page.isSplash {
+                    // MARK: - Splash Screen
+                    ZStack {
+                        Color.white.ignoresSafeArea()
+                        
+                        // Blob peach kanan atas
+                        Circle()
+                            .fill(Color(hex: "FFCBA4").opacity(0.5))
+                            .frame(width: 280, height: 280)
+                            .blur(radius: 60)
+                            .offset(x: 60, y: -320)
+                        
+                        // Blob peach kiri bawah
+                        Circle()
+                            .fill(Color(hex: "FFCBA4").opacity(0.5))
+                            .frame(width: 280, height: 280)
+                            .blur(radius: 60)
+                            .offset(x: -60, y: 320)
+                        
+                        VStack(spacing: 16) {
+                            // Logo card putih dengan shadow
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 24)
+                                    .fill(Color.white)
+                                    .frame(width: 110, height: 110)
+                                    .shadow(
+                                        color: Color.black.opacity(0.12),
+                                        radius: 20, x: 0, y: 8
+                                    )
+                                
+                                Image(page.imageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 72, height: 72)
+                            }
                             
+                            // "Step" gelap + "UP" orange
+                            Text("\(Text("Step").font(.custom("Lexend-Bold", size: 32)).foregroundColor(Color.textPrimary))\(Text("UP").font(.custom("Lexend-Bold", size: 32)).foregroundColor(Color.themePrimary))")
+                            
+                            Text("SMALL STEP, BIG IMPACT")
+                                .font(.custom("Lexend-Regular", size: 11))
+                                .foregroundColor(Color.textSecondary)
+                                .kerning(2.5)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea()
+                    
+                } else if page.imageStyle == .fullWidth {
+                    // MARK: - Layout Full Width (Onboarding 2)
+                    Image(page.imageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: screenHeight * 0.42)
+                        .clipped()
+                        .clipShape(
+                            RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight])
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(page.title)
+                            .font(ThemeFont.title)
+                            .foregroundColor(Color.textPrimary)
+                            .multilineTextAlignment(.leading)
+                        
+                        Text(page.description)
+                            .font(ThemeFont.body)
+                            .foregroundColor(Color.textSecondary)
+                            .multilineTextAlignment(.leading)
+                            .lineSpacing(4)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.top, 24)
+                    
+                    Spacer()
+                    
+                } else {
+                    // MARK: - Layout Card (Onboarding 3 & 4)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(Color(hex: "FFF0E8"))
+                            .padding(.horizontal, 24)
+                        
+                        if page.isSystemImage {
+                            Image(systemName: page.imageName)
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundColor(Color.themePrimary)
+                                .frame(width: 180, height: 180)
+                        } else {
                             Image(page.imageName)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 72, height: 72)
+                                .padding(20)
                         }
+                    }
+                    .frame(height: screenHeight * 0.42)
+                    
+                    VStack(alignment: .center, spacing: 12) {
+                        Text(page.title)
+                            .font(ThemeFont.title)
+                            .foregroundColor(Color.textPrimary)
+                            .multilineTextAlignment(.center)
                         
-                        // "Step" gelap + "UP" orange
-                        (
-                            Text("Step")
-                                .font(.custom("Lexend-Bold", size: 32))
-                                .foregroundColor(Color.textPrimary)
-                            +
-                            Text("UP")
-                                .font(.custom("Lexend-Bold", size: 32))
-                                .foregroundColor(Color.themePrimary)
-                        )
-                        
-                        Text("SMALL STEP, BIG IMPACT")
-                            .font(.custom("Lexend-Regular", size: 11))
+                        Text(page.description)
+                            .font(ThemeFont.body)
                             .foregroundColor(Color.textSecondary)
-                            .kerning(2.5)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 8)
                     }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
-                
-            } else if page.imageStyle == .fullWidth {
-                // MARK: - Layout Full Width (Onboarding 2)
-                Image(page.imageName)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(height: UIScreen.main.bounds.height * 0.42)
-                    .clipped()
-                    .clipShape(
-                        RoundedCorner(radius: 24, corners: [.bottomLeft, .bottomRight])
-                    )
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(page.title)
-                        .font(ThemeFont.title)
-                        .foregroundColor(Color.textPrimary)
-                        .multilineTextAlignment(.leading)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 24)
                     
-                    Text(page.description)
-                        .font(ThemeFont.body)
-                        .foregroundColor(Color.textSecondary)
-                        .multilineTextAlignment(.leading)
-                        .lineSpacing(4)
+                    Spacer()
                 }
-                .padding(.horizontal, 28)
-                .padding(.top, 24)
-                
-                Spacer()
-                
-            } else {
-                // MARK: - Layout Card (Onboarding 3 & 4)
-                ZStack {
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(Color(hex: "FFF0E8"))
-                        .padding(.horizontal, 24)
-                    
-                    if page.isSystemImage {
-                        Image(systemName: page.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(Color.themePrimary)
-                            .frame(width: 180, height: 180)
-                    } else {
-                        Image(page.imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .padding(20)
-                    }
-                }
-                .frame(height: UIScreen.main.bounds.height * 0.42)
-                
-                VStack(alignment: .center, spacing: 12) {
-                    Text(page.title)
-                        .font(ThemeFont.title)
-                        .foregroundColor(Color.textPrimary)
-                        .multilineTextAlignment(.center)
-                    
-                    Text(page.description)
-                        .font(ThemeFont.body)
-                        .foregroundColor(Color.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .padding(.horizontal, 8)
-                }
-                .padding(.horizontal, 32)
-                .padding(.top, 24)
-                
-                Spacer()
             }
         }
     }

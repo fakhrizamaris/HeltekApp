@@ -73,7 +73,7 @@ class FirebaseManager: ObservableObject {
         let monthlyRef = userRef.collection("monthlyStats").document(monthKey)
 
         // 1) Update user streak & totals atomically
-        try await db.runTransaction { transaction, errorPointer in
+        _ = try await db.runTransaction { transaction, errorPointer in
             let userDoc: DocumentSnapshot
             do {
                 userDoc = try transaction.getDocument(userRef)

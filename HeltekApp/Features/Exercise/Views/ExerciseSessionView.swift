@@ -305,7 +305,7 @@ struct ExerciseSessionView: View {
                 }
             }
 
-            await sessionCompleted()
+            sessionCompleted()
         }
     }
 
