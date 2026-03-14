@@ -17,57 +17,51 @@ final class StatsViewModel: ObservableObject {
 
     private let repository: StatsRepository
 
-    let activityTitle = "Activity vs. Sedentary"
-    let activityMinutesText = "320"
+    let activityTitle = "Active Minutes"
+    @Published var activityMinutesText = "0"
     let activityMinutesUnit = "min"
 
     @Published private(set) var summaryCards: [StatsSummaryCard] = []
     @Published private(set) var streakHistory: [StreakHistoryItem] = []
     @Published private(set) var calendarCounts: [Date: Int] = [:]
-
-    var chartEntries: [StatsBarEntry] {
-        switch selectedPeriod {
-        case .daily:
-            return dummyDailyChart
-        case .weekly:
-            return dummyWeeklyChart
-        case .monthly:
-            return dummyMonthlyChart
-        }
-    }
+    
+    @Published private(set) var chartEntries: [StatsChartEntry] = []
 
     private let calendar = Calendar.current
+    private var cancellables = Set<AnyCancellable>()
 
-    init(repository: StatsRepository = MockStatsRepository()) {
+    init(repository: StatsRepository = FirebaseStatsRepository()) {
         self.repository = repository
-        Task {
-            await load()
-        }
+        
+        $selectedPeriod
+            .dropFirst()
+            .sink { [weak self] period in
+                guard let self = self else { return }
+                Task {
+                    await self.loadChartData(for: period)
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func load() async {
-        // Ready for backend integration: replace repository with API implementation.
         let summary = await repository.fetchSummaryCards()
         let history = await repository.fetchStreakHistory()
         let counts = await repository.fetchCalendarCounts()
+        
+        summaryCards = summary
+        streakHistory = history
+        calendarCounts = counts
+        
+        await loadChartData(for: selectedPeriod)
+    }
 
-        if summary.isEmpty {
-            summaryCards = dummySummaryCards
-        } else {
-            summaryCards = summary
-        }
-
-        if history.isEmpty {
-            streakHistory = dummyStreakHistory
-        } else {
-            streakHistory = history
-        }
-
-        if counts.isEmpty {
-            calendarCounts = dummyCalendarCounts
-        } else {
-            calendarCounts = counts
-        }
+    func loadChartData(for period: StatsPeriod) async {
+        let entries = await repository.fetchChartData(period: period)
+        self.chartEntries = entries
+        
+        let totalActive = entries.reduce(0) { $0 + $1.activeMinutes }
+        self.activityMinutesText = "\(totalActive)"
     }
 
     func calendarDays(for monthDate: Date) -> [CalendarDay] {
@@ -87,110 +81,18 @@ final class StatsViewModel: ObservableObject {
         }
         return days
     }
-
-    // MARK: - Dummy Data (Remove when API ready)
-    private var dummySummaryCards: [StatsSummaryCard] {
-        [
-            StatsSummaryCard(
-                title: "Global Ranking",
-                value: "Rank #1,250",
-                subtitle: "Top 5%",
-                systemImageName: "trophy.fill"
-            ),
-            StatsSummaryCard(
-                title: "Total Exercises",
-                value: "24",
-                subtitle: "Last 7 days",
-                systemImageName: "figure.walk"
-            ),
-            StatsSummaryCard(
-                title: "Current Streak",
-                value: "14 days",
-                subtitle: "Keep it up",
-                systemImageName: "bolt.fill"
-            )
-        ]
-    }
-
-    private var dummyStreakHistory: [StreakHistoryItem] {
-        let today = calendar.startOfDay(for: Date())
-        return [
-            StreakHistoryItem(
-                date: today,
-                goalCount: 5,
-                actualCount: 2
-            ),
-            StreakHistoryItem(
-                date: calendar.date(byAdding: .day, value: -1, to: today) ?? today,
-                goalCount: 5,
-                actualCount: 9
-            ),
-            StreakHistoryItem(
-                date: calendar.date(byAdding: .day, value: -2, to: today) ?? today,
-                goalCount: 5,
-                actualCount: 1
-            )
-        ]
-    }
-
-    private var dummyDailyChart: [StatsBarEntry] {
-        [
-            StatsBarEntry(label: "M", activeMinutes: 30, sedentaryMinutes: 20),
-            StatsBarEntry(label: "T", activeMinutes: 45, sedentaryMinutes: 25),
-            StatsBarEntry(label: "W", activeMinutes: 25, sedentaryMinutes: 30),
-            StatsBarEntry(label: "T", activeMinutes: 40, sedentaryMinutes: 18),
-            StatsBarEntry(label: "F", activeMinutes: 55, sedentaryMinutes: 22),
-            StatsBarEntry(label: "S", activeMinutes: 20, sedentaryMinutes: 15),
-            StatsBarEntry(label: "S", activeMinutes: 35, sedentaryMinutes: 25)
-        ]
-    }
-
-    private var dummyWeeklyChart: [StatsBarEntry] {
-        [
-            StatsBarEntry(label: "W1", activeMinutes: 210, sedentaryMinutes: 140),
-            StatsBarEntry(label: "W2", activeMinutes: 260, sedentaryMinutes: 160),
-            StatsBarEntry(label: "W3", activeMinutes: 180, sedentaryMinutes: 120),
-            StatsBarEntry(label: "W4", activeMinutes: 320, sedentaryMinutes: 190)
-        ]
-    }
-
-    private var dummyMonthlyChart: [StatsBarEntry] {
-        [
-            StatsBarEntry(label: "Jan", activeMinutes: 820, sedentaryMinutes: 520),
-            StatsBarEntry(label: "Feb", activeMinutes: 760, sedentaryMinutes: 480),
-            StatsBarEntry(label: "Mar", activeMinutes: 900, sedentaryMinutes: 560),
-            StatsBarEntry(label: "Apr", activeMinutes: 680, sedentaryMinutes: 450),
-            StatsBarEntry(label: "May", activeMinutes: 990, sedentaryMinutes: 610),
-            StatsBarEntry(label: "Jun", activeMinutes: 870, sedentaryMinutes: 540)
-        ]
-    }
-
-    private var dummyCalendarCounts: [Date: Int] {
-        let today = calendar.startOfDay(for: Date())
-        return [
-            today: 2,
-            calendar.date(byAdding: .day, value: -1, to: today) ?? today: 7,
-            calendar.date(byAdding: .day, value: -2, to: today) ?? today: 14
-        ]
-    }
 }
 
 protocol StatsRepository {
     func fetchSummaryCards() async -> [StatsSummaryCard]
     func fetchStreakHistory() async -> [StreakHistoryItem]
     func fetchCalendarCounts() async -> [Date: Int]
+    func fetchChartData(period: StatsPeriod) async -> [StatsChartEntry]
 }
 
 struct MockStatsRepository: StatsRepository {
-    func fetchSummaryCards() async -> [StatsSummaryCard] {
-        []
-    }
-
-    func fetchStreakHistory() async -> [StreakHistoryItem] {
-        []
-    }
-
-    func fetchCalendarCounts() async -> [Date: Int] {
-        [:]
-    }
+    func fetchSummaryCards() async -> [StatsSummaryCard] { [] }
+    func fetchStreakHistory() async -> [StreakHistoryItem] { [] }
+    func fetchCalendarCounts() async -> [Date: Int] { [:] }
+    func fetchChartData(period: StatsPeriod) async -> [StatsChartEntry] { [] }
 }
