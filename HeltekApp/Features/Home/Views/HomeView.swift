@@ -109,67 +109,72 @@ struct SpotlightOverlayView: View {
         return frame
     }
 
-    private var tooltipAbove: Bool {
+    private func tooltipAbove(screenHeight: CGFloat) -> Bool {
         // Tampilkan tooltip di bawah elemen jika elemen berada di top-half layar
-        let screenH = UIScreen.main.bounds.height
-        return currentFrame.midY > screenH / 2
+        return currentFrame.midY > screenHeight / 2
     }
 
     var body: some View {
-        if let step = currentStep, currentFrame != .zero {
-            ZStack {
-                // MARK: Dimmed Mask with Cutout
-                SpotlightMaskShape(
-                    rect: currentFrame,
-                    cornerRadius: step.isCircle ? currentFrame.height / 2 : 20,
-                    padding: step.padding
-                )
-                .fill(Color.black.opacity(0.72), style: FillStyle(eoFill: true))
-                .ignoresSafeArea()
-                .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
-                .onTapGesture {
-                    onNext()
-                }
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let screenHeight = geometry.size.height
+            let isTooltipAbove = tooltipAbove(screenHeight: screenHeight)
+            
+            if let step = currentStep, currentFrame != .zero {
+                ZStack {
+                    // MARK: Dimmed Mask with Cutout
+                    SpotlightMaskShape(
+                        rect: currentFrame,
+                        cornerRadius: step.isCircle ? currentFrame.height / 2 : 20,
+                        padding: step.padding
+                    )
+                    .fill(Color.black.opacity(0.72), style: FillStyle(eoFill: true))
+                    .ignoresSafeArea()
+                    .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                    .onTapGesture {
+                        onNext()
+                    }
 
-                // MARK: Glowing Ring Around Cutout
-                let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
-                if step.isCircle {
-                    Circle()
-                        .stroke(Color.white.opacity(0.25), lineWidth: 2)
-                        .frame(width: cutoutRect.width, height: cutoutRect.height)
-                        .position(x: cutoutRect.midX, y: cutoutRect.midY)
-                        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
-                } else {
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.25), lineWidth: 2)
-                        .frame(width: cutoutRect.width, height: cutoutRect.height)
-                        .position(x: cutoutRect.midX, y: cutoutRect.midY)
-                        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
-                }
+                    // MARK: Glowing Ring Around Cutout
+                    let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
+                    if step.isCircle {
+                        Circle()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                            .frame(width: cutoutRect.width, height: cutoutRect.height)
+                            .position(x: cutoutRect.midX, y: cutoutRect.midY)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                    } else {
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                            .frame(width: cutoutRect.width, height: cutoutRect.height)
+                            .position(x: cutoutRect.midX, y: cutoutRect.midY)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
+                    }
 
-                // MARK: Tooltip Card
-                tooltipCard(step: step)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: tooltipAbove ? .bottom : .top)),
-                        removal: .opacity
-                    ))
-                    .id(step.id) // force re-render & transition on step change
+                    // MARK: Tooltip Card
+                    tooltipCard(step: step, screenWidth: screenWidth, isTooltipAbove: isTooltipAbove)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: isTooltipAbove ? .bottom : .top)),
+                            removal: .opacity
+                        ))
+                        .id(step.id) // force re-render & transition on step change
+                }
             }
         }
     }
 
     @ViewBuilder
-    private func tooltipCard(step: WalkthroughStep) -> some View {
+    private func tooltipCard(step: WalkthroughStep, screenWidth: CGFloat, isTooltipAbove: Bool) -> some View {
         let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
         let tooltipGap: CGFloat = 20
-        let tooltipMaxWidth: CGFloat = UIScreen.main.bounds.width - 48
-        let cardY: CGFloat = tooltipAbove
+        let tooltipMaxWidth: CGFloat = screenWidth - 48
+        let cardY: CGFloat = isTooltipAbove
             ? cutoutRect.minY - tooltipGap - 90   // atas elemen
             : cutoutRect.maxY + tooltipGap + 60   // bawah elemen
 
         VStack(spacing: 12) {
             // Arrow indicator pointing toward elemen
-            Image(systemName: tooltipAbove ? "chevron.down" : "chevron.up")
+            Image(systemName: isTooltipAbove ? "chevron.down" : "chevron.up")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255))
 
@@ -222,7 +227,7 @@ struct SpotlightOverlayView: View {
                 )
         )
         .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 8)
-        .position(x: UIScreen.main.bounds.width / 2, y: cardY)
+        .position(x: screenWidth / 2, y: cardY)
         .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
     }
 }
@@ -245,7 +250,9 @@ struct HomeView: View {
     @State private var streakCount: Int = 0
     @State private var isCountdownPaused = false
     @State private var timerEndDate: Date?
-    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    // MARK: - Timer States
+    let timer = Timer.publish(every: 1, on: RunLoop.main, in: .common).autoconnect()
 
     // MARK: - Navigation & Sheet States
     @State private var showProfile = false

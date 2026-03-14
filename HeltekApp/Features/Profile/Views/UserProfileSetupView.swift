@@ -2,8 +2,8 @@
 //  UserProfileSetupView.swift
 //  HeltekApp
 //
-//  View untuk mengisi nama user setelah registrasi.
-//  Desain single-page yang clean dan welcoming.
+//  View to enter the user's name after registration.
+//  Clean and welcoming single-page design.
 //
 
 import SwiftUI
@@ -59,6 +59,7 @@ struct UserProfileSetupView: View {
         .alert("Oops!", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
+            // Catatan: Pastikan string errorMessage di ViewModel kamu juga berbahasa Inggris
             Text(viewModel.errorMessage)
         }
     }
@@ -80,14 +81,13 @@ struct UserProfileSetupView: View {
             .scaleEffect(animateContent ? 1 : 0.5)
             .animation(.spring(response: 0.6, dampingFraction: 0.7), value: animateContent)
             
-            Text("Siapa Nama Kamu?")
+            Text("What's Your Name?")
                 .font(ThemeFont.title)
                 .foregroundColor(.textPrimary)
                 .multilineTextAlignment(.center)
             
-            Text("Biar kita bisa menyapamu dengan hangat 👋")
-                .font(ThemeFont.body)
-                .foregroundColor(.textSecondary)
+            // Menggunakan SF Symbol "hand.wave.fill" alih-alih emoji
+            Text("\(Text("So we can greet you warmly").font(ThemeFont.body).foregroundColor(.textSecondary)) \(Text(Image(systemName: "hand.wave.fill")).foregroundColor(.themePrimary))")
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
@@ -98,7 +98,7 @@ struct UserProfileSetupView: View {
     // MARK: - Name Input Section
     private var nameInputSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Nama Lengkap")
+            Text("Full Name")
                 .font(ThemeFont.bodyBold)
                 .foregroundColor(.textPrimary)
             
@@ -107,7 +107,7 @@ struct UserProfileSetupView: View {
                     .foregroundColor(.themePrimary)
                     .frame(width: 20)
                 
-                TextField("Masukkan nama lengkapmu", text: $viewModel.fullName)
+                TextField("Enter your full name", text: $viewModel.fullName)
                     .font(ThemeFont.body)
                     .autocorrectionDisabled()
                     .submitLabel(.done)
@@ -126,7 +126,7 @@ struct UserProfileSetupView: View {
             )
             
             // Hint text
-            Text("Nama ini akan ditampilkan di profil dan leaderboard")
+            Text("This name will be displayed on your profile and the leaderboard")
                 .font(.system(size: 12))
                 .foregroundColor(.textSecondary)
                 .padding(.leading, 4)
@@ -149,7 +149,7 @@ struct UserProfileSetupView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(0.8)
                 } else {
-                    Text("Lanjutkan")
+                    Text("Continue")
                         .font(ThemeFont.button)
                     
                     Image(systemName: "arrow.right")
