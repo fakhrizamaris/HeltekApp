@@ -330,10 +330,19 @@ struct HomeView: View {
 
                         Spacer()
 
-                        Image(systemName: "bell")
-                            .font(.title3)
-                            .padding(10)
-                            .background(Circle().fill(Color.white).shadow(radius: 1))
+                        Button {
+                                withAnimation {
+                                    // Memanggil kembali walkthrough dari step pertama
+                                    currentWalkthroughStep = 1
+                                }
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .font(.title3)
+                                    .foregroundColor(themeOrange) // Menambahkan warna agar senada
+                                    .padding(10)
+                                    .background(Circle().fill(Color.white).shadow(radius: 1))
+                            }
+                            .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 20)
@@ -560,7 +569,7 @@ struct HomeView: View {
                     isCountdownPaused = true
                     timerEndDate = nil
                     NotificationManager.shared.cancelTimerNotification()
-                    NotificationManager.shared.playAlarmSound()
+                    NotificationManager.shared.playImportedSound(named: "pikachu", )
                     LiveActivityManager.shared.end()
                     navigateToSuccess = true
                 }

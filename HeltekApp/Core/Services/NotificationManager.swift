@@ -7,10 +7,12 @@
 
 import Foundation
 import AudioToolbox
+import AVFoundation
 import UserNotifications
 
 final class NotificationManager {
     static let shared = NotificationManager()
+    private var soundEffectPlayer: AVAudioPlayer?
 
     private init() {}
 
@@ -41,4 +43,17 @@ final class NotificationManager {
         // Simple system alarm sound for foreground usage.
         AudioServicesPlaySystemSound(SystemSoundID(1005))
     }
+    
+    func playImportedSound(named soundName: String) {
+            if let url = Bundle.main.url(forResource: soundName, withExtension: "wav") {
+                do {
+                    soundEffectPlayer = try AVAudioPlayer(contentsOf: url)
+                    soundEffectPlayer?.play()
+                } catch {
+                    print("Error playing sound \(error.localizedDescription)")
+                }
+            } else {
+                print("Sound file not found \(soundName)")
+            }
+        }
 }
