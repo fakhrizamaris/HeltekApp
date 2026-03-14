@@ -8,9 +8,15 @@
 import Foundation
 
 struct Player: Identifiable {
-    let id = UUID()
+    let id: String
     let name: String
-    let streakDays: Int
+    let points: Int
     let avatarName: String
-    let globalRank: Int
+    let occupation: String
+    var trend: RankTrend = .neutral
+    var isCurrentUser: Bool = false
+}
+
+enum RankTrend {
+    case up, down, neutral
 }
