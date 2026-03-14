@@ -237,6 +237,7 @@ struct SpotlightOverlayView: View {
 struct HomeView: View {
     // MARK: - ViewModels & AppStorage
     @StateObject private var authVM = AuthViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("userName") private var userName = "User"
     @AppStorage("hasSeenWalkthrough") private var hasSeenWalkthrough = false
 
@@ -483,6 +484,7 @@ struct HomeView: View {
                             timerEndDate = nil
                             NotificationManager.shared.cancelTimerNotification()
                             LiveActivityManager.shared.end()
+                            syncWidgetState(forceReload: true)
                         } else {
                             isActive = true
                             isCountdownPaused = false
@@ -490,6 +492,7 @@ struct HomeView: View {
                             NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
                             let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
                             LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
+                            syncWidgetState(forceReload: true)
                         }
                     }) {
                         HStack {
@@ -533,6 +536,8 @@ struct HomeView: View {
             .task {
                 NotificationManager.shared.requestAuthorization()
                 await loadStreakCount()
+                applySharedWidgetStateIfNeeded()
+                syncWidgetState(forceReload: true)
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     if !hasSeenWalkthrough {
@@ -566,24 +571,44 @@ struct HomeView: View {
                 ExerciseSessionView(didCompleteSession: $didCompleteSession)
             }
             .onReceive(timer) { _ in
+                applySharedWidgetStateIfNeeded()
                 guard isActive, !isCountdownPaused else { return }
                 if let endDate = timerEndDate {
                     timeRemaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
                 } else {
                     timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
                 }
+                syncWidgetState()
                 if timeRemaining <= 0 {
                     isCountdownPaused = true
                     timerEndDate = nil
                     NotificationManager.shared.cancelTimerNotification()
                     NotificationManager.shared.playImportedSound(named: "pikachu", )
                     LiveActivityManager.shared.end()
+                    syncWidgetState(forceReload: true)
                     navigateToSuccess = true
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .widgetStopTimerRequested)) { _ in
+                guard isActive else { return }
+                isActive = false
+                isCountdownPaused = false
+                timeRemaining = selectedMinutes * 60
+                timerEndDate = nil
+                NotificationManager.shared.cancelTimerNotification()
+                LiveActivityManager.shared.end()
+                syncWidgetState(forceReload: true)
             }
             .onChange(of: didCompleteSession) { _, newValue in
                 guard newValue else { return }
                 resetTimerAndResume()
+            }
+            .onChange(of: streakCount) { _, _ in
+                syncWidgetState(forceReload: true)
+            }
+            .onChange(of: scenePhase) { _, newValue in
+                guard newValue == .active else { return }
+                applySharedWidgetStateIfNeeded()
             }
         } // NavigationStack
     }
@@ -638,6 +663,34 @@ struct HomeView: View {
             let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
             LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
         }
+        syncWidgetState(forceReload: true)
+    }
+
+    private func syncWidgetState(forceReload: Bool = false) {
+        WidgetSyncManager.shared.sync(
+            remainingSeconds: timeRemaining,
+            timerEndDate: timerEndDate,
+            isActive: isActive,
+            isPaused: isCountdownPaused,
+            currentStreak: streakCount,
+            forceReload: forceReload
+        )
+    }
+
+    private func applySharedWidgetStateIfNeeded() {
+        guard let defaults = UserDefaults(suiteName: WidgetSyncKeys.appGroupID) else { return }
+        let isWidgetTimerActive = defaults.bool(forKey: WidgetSyncKeys.isTimerActive)
+        let stopRequested = defaults.bool(forKey: WidgetSyncKeys.stopRequested)
+        guard (!isWidgetTimerActive || stopRequested), isActive else { return }
+
+        isActive = false
+        isCountdownPaused = false
+        timeRemaining = selectedMinutes * 60
+        timerEndDate = nil
+        NotificationManager.shared.cancelTimerNotification()
+        LiveActivityManager.shared.end()
+        defaults.set(false, forKey: WidgetSyncKeys.stopRequested)
+        syncWidgetState(forceReload: true)
     }
 }
 

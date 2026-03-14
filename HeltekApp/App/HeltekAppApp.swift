@@ -29,18 +29,26 @@ struct HeltekAppApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            if !hasSeenOnboarding {
-                // Step 1: Onboarding (pengenalan app)
-                OnboardingView()
-            } else if !isLoggedIn {
-                // Step 2: Login / Register
-                LoginView()
-            } else if !hasCompletedProfile {
-                // Step 3: Isi data diri (baru muncul setelah login/register)
-                UserProfileSetupView()
-            } else {
-                // Step 4: Main App — semua sudah lengkap!
-                MainTabView()
+            Group {
+                if !hasSeenOnboarding {
+                    // Step 1: Onboarding (pengenalan app)
+                    OnboardingView()
+                } else if !isLoggedIn {
+                    // Step 2: Login / Register
+                    LoginView()
+                } else if !hasCompletedProfile {
+                    // Step 3: Isi data diri (baru muncul setelah login/register)
+                    UserProfileSetupView()
+                } else {
+                    // Step 4: Main App - semua sudah lengkap!
+                    MainTabView()
+                }
+            }
+            .onOpenURL { url in
+                guard url.scheme == "heltekapp", url.host == "stop-timer" else { return }
+                Task { @MainActor in
+                    WidgetSyncManager.shared.handleStopFromWidget()
+                }
             }
         }
     }
