@@ -279,9 +279,9 @@ struct HomeView: View {
     }
 
     private var currentPetImage: String {
-        if streakCount >= milestones[1] { return "sun.max.trianglebadge.exclamationmark.fill" }
-        if streakCount >= milestones[0] { return "sun.max.fill" }
-        return "sun.horizon.fill"
+        if streakCount >= milestones[1] { return "pet_third_evo" }
+        if streakCount >= milestones[0] { return "pet_second_evo" }
+        return "pet_first_evo"
     }
 
     private var petStatusMessage: String {
@@ -387,12 +387,13 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 15) {
                             ZStack {
-                                Circle()
-                                    .fill(lightOrange)
+                                Image(currentPetImage)
+                                    .resizable()
+                                    .scaledToFit()
                                     .frame(width: 50, height: 50)
-                                Image(systemName: currentPetImage)
                                     .foregroundColor(themeOrange)
                                     .animation(.spring(), value: currentPetImage)
+                                    
                             }
 
                             VStack(alignment: .leading) {
