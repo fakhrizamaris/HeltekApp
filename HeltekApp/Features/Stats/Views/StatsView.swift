@@ -78,12 +78,6 @@ struct StatsView: View {
             }
 
             StatsLineChart(entries: viewModel.chartEntries, animateTrigger: chartAnimationID)
-
-            HStack(spacing: 16) {
-                Spacer(minLength: 0)
-                LegendItem(color: Color.themePrimary, title: "Active")
-                Spacer(minLength: 0)
-            }
         }
         .padding(16)
         .background(Color.themeSurface)
@@ -143,55 +137,24 @@ private struct StatsLineChart: View {
 
     var body: some View {
         Chart(entries) { entry in
-            LineMark(
+            // MENGUBAH LINEMARK & AREAMARK MENJADI BARMARK
+            BarMark(
                 x: .value("Date", entry.label),
                 y: .value("Minutes", entry.activeMinutes)
             )
-            .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
             .foregroundStyle(Color.themePrimary)
-            .symbol {
-                Circle()
-                    .fill(Color.themePrimary)
-                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                    .frame(width: 10, height: 10)
-            }
-            
-            AreaMark(
-                x: .value("Date", entry.label),
-                y: .value("Minutes", entry.activeMinutes)
-            )
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [Color.themePrimary.opacity(0.3), Color.clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            // (Opsional) Menambahkan cornerRadius agar ujung bar sedikit membulat
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
         }
         .chartYAxis {
             AxisMarks(position: .leading)
         }
         .chartXAxis {
+            // Kita biarkan AxisMarks default karena ViewModel akan menyediakan label yang lengkap
             AxisMarks()
         }
         .frame(height: 140)
         .animation(.easeInOut(duration: 0.3), value: animateTrigger)
-    }
-}
-
-private struct LegendItem: View {
-    let color: Color
-    let title: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            Text(title)
-                .font(ThemeFont.caption)
-                .foregroundColor(.textSecondary)
-        }
     }
 }
 
