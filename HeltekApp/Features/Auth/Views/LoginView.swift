@@ -33,7 +33,7 @@ struct LoginView: View {
                             .scaledToFill()
                             .frame(height: 280) // Sedikit ditinggikan agar proporsional saat menabrak ujung atas
                             .clipShape(
-                                RoundedCorner(radius: 20, corners: [.bottomLeft, .bottomRight])
+                                LoginRoundedCorner(radius: 20, corners: [.bottomLeft, .bottomRight])
                             )
                             .clipped()
                         
@@ -87,26 +87,15 @@ struct LoginView: View {
                             
                             // Field Password
                             VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("Password")
-                                        .font(ThemeFont.bodyBold)
-                                        .foregroundColor(Color.textPrimary)
-                                    
-                                    Spacer()
-                                    
-                                    Button("Forgot Password?") {
-                                        print("Forgot password ditekan")
-                                    }
-                                    .font(ThemeFont.caption)
-                                    .foregroundColor(Color.themePrimary)
-                                }
+                                Text("Password")
+                                    .font(ThemeFont.bodyBold)
+                                    .foregroundColor(Color.textPrimary)
                                 
                                 HStack(spacing: 12) {
                                     Image(systemName: "lock")
                                         .foregroundColor(Color.textSecondary)
                                         .frame(width: 20)
                                     
-                                    // 💡 PERBAIKAN: Menggunakan 'prompt' untuk SecureField/TextField
                                     Group {
                                         if isPasswordVisible {
                                             TextField("", text: $password, prompt: Text("••••••••").foregroundColor(.gray))
@@ -134,9 +123,10 @@ struct LoginView: View {
                                 )
                             }
                             
-                            // Tombol Login
+                            // MARK: - Tombol Login
                             Button(action: {
                                 Task {
+                                    // Panggil fungsi view model. Error dan loading otomatis ditangani di sana.
                                     await authVM.loginWithEmail(email: email, password: password)
                                 }
                             }) {
@@ -155,18 +145,32 @@ struct LoginView: View {
                                 .background(
                                     (email.isEmpty || password.isEmpty || authVM.isLoading) ? Color.gray.opacity(0.5) : Color.themePrimary
                                 )
-                                .cornerRadius(12) // Menggunakan angka agar aman jika ThemeStyle belum dideklarasi
+                                .cornerRadius(12)
                             }
                             .disabled(email.isEmpty || password.isEmpty || authVM.isLoading)
                             .padding(.top, 4)
                             
-                            // Pesan Error jika gagal Login
+                            // MARK: - Error Message General
                             if authVM.showError {
-                                Text(authVM.errorMessage)
-                                    .font(ThemeFont.caption)
-                                    .foregroundColor(.red)
-                                    .multilineTextAlignment(.leading)
-                                    .padding(.horizontal)
+                                HStack(alignment: .top, spacing: 10) {
+                                    Image(systemName: "exclamationmark.circle.fill")
+                                        .foregroundColor(.red)
+                                        .font(.system(size: 16))
+                                    
+                                    Text(authVM.errorMessage)
+                                        .font(ThemeFont.caption)
+                                        .foregroundColor(.red)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.red.opacity(0.1)) // Background merah tipis
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.red.opacity(0.3), lineWidth: 1) // Border merah
+                                )
+                                .transition(.opacity) // Memberikan efek muncul yang halus
                             }
                             
                             // Link ke Register
@@ -200,7 +204,7 @@ struct LoginView: View {
                         .background(Circle().fill(Color.white.opacity(0.8)))
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
-                .padding(.top, 16) 
+                .padding(.top, 16)
                 .padding(.leading, 16)
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -212,4 +216,21 @@ struct LoginView: View {
     
     private func handleLogin() {
     }
+    
+    // MARK: - Custom Shape untuk memotong sudut tertentu
+    struct LoginRoundedCorner: Shape {
+        var radius: CGFloat = .infinity
+        var corners: UIRectCorner = .allCorners
+
+        func path(in rect: CGRect) -> Path {
+            let path = UIBezierPath(
+                roundedRect: rect,
+                byRoundingCorners: corners,
+                cornerRadii: CGSize(width: radius, height: radius)
+            )
+            return Path(path.cgPath)
+        }
+    }
 }
+
+
