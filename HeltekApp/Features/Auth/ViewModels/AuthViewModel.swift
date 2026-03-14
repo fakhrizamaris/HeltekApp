@@ -111,12 +111,12 @@ class AuthViewModel: ObservableObject {
             
             // Nama final — pakai dari Apple, atau dari Firebase, atau default
             let finalName = name.isEmpty
-                ? (firebaseUser.displayName ?? (userName.isEmpty ? "User" : userName))
-                : name
+            ? (firebaseUser.displayName ?? (userName.isEmpty ? "User" : userName))
+            : name
             
             let finalEmail = email.isEmpty
-                ? (firebaseUser.email ?? userEmail)
-                : email
+            ? (firebaseUser.email ?? userEmail)
+            : email
             
             // Simpan atau update profil di Firestore
             try await firebase.saveUserProfile(
@@ -273,5 +273,34 @@ class AuthViewModel: ObservableObject {
             String(format: "%02x", $0)
         }.joined()
         return hashString
+    }
+    
+    // MARK: - Translate Firebase Error
+    private func getFriendlyErrorMessage(for error: Error) -> String {
+        let nsError = error as NSError
+        
+        // PERBAIKAN: Menghapus ".Code", cukup memanggil AuthErrorCode(rawValue:)
+        if let authErrorCode = AuthErrorCode(rawValue: nsError.code) {
+            switch authErrorCode {
+            case .invalidEmail:
+                return "The email format is invalid."
+                // Jika suatu saat versimu protes tentang userNotFound, kamu bisa menghapusnya dan sisa invalidCredential saja
+            case .userNotFound, .wrongPassword, .invalidCredential:
+                return "Invalid email or password. Please try again."
+            case .networkError:
+                return "Network error. Please check your internet connection."
+            case .userDisabled:
+                return "This account has been disabled. Please contact support."
+            case .tooManyRequests:
+                return "Too many failed attempts. Please try again later."
+            case .emailAlreadyInUse:
+                return "This email is already registered. Please log in."
+            case .weakPassword:
+                return "Your password is too weak. Please use at least 6 characters."
+            default:
+                return error.localizedDescription
+            }
+        }
+        return error.localizedDescription
     }
 }
