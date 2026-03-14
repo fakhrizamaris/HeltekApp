@@ -26,5 +26,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:168189577953:ios:0436705284f15a939b05a0</string>
+	<key>DATABASE_URL</key>
+	<string>https://stepup-dc0e4-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
 </plist>
