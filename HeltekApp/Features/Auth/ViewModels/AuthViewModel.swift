@@ -45,54 +45,6 @@ class AuthViewModel: ObservableObject {
         request.nonce = sha256(nonce)
     }
     
-    // MARK: - Handle hasil Sign in with Apple
-    func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
-        switch result {
-            
-        case .success(let authorization):
-            guard let credential = authorization.credential
-                    as? ASAuthorizationAppleIDCredential else { return }
-            
-            guard let nonce = currentNonce else {
-                handleError("Nonce tidak ditemukan — coba lagi")
-                return
-            }
-            
-            guard let appleIDToken = credential.identityToken,
-                  let tokenString = String(data: appleIDToken, encoding: .utf8) else {
-                handleError("Gagal membaca token dari Apple")
-                return
-            }
-            
-            // Buat credential Firebase dari token Apple
-            let firebaseCredential = OAuthProvider.appleCredential(
-                withIDToken: tokenString,
-                rawNonce: nonce,
-                fullName: credential.fullName
-            )
-            
-            // Nama dari Apple — hanya ada di login pertama
-            let firstName = credential.fullName?.givenName ?? ""
-            let lastName  = credential.fullName?.familyName ?? ""
-            let fullName  = "\(firstName) \(lastName)"
-                .trimmingCharacters(in: .whitespaces)
-            let appleEmail = credential.email ?? ""
-            
-            print("🍎 Apple token diterima, proses login ke Firebase...")
-            
-            // Login ke Firebase dengan credential dari Apple
-            Task {
-                await signInToFirebase(
-                    credential: firebaseCredential,
-                    name: fullName,
-                    email: appleEmail
-                )
-            }
-            
-        case .failure(let error):
-            handleError("Apple Sign In gagal: \(error.localizedDescription)")
-        }
-    }
     
     // MARK: - Login ke Firebase
     private func signInToFirebase(
@@ -143,7 +95,7 @@ class AuthViewModel: ObservableObject {
             
         } catch {
             isLoading = false
-            handleError("Login gagal: \(error.localizedDescription)")
+            handleError(getFriendlyErrorMessage(for: error))
         }
     }
     
@@ -183,7 +135,7 @@ class AuthViewModel: ObservableObject {
             
         } catch {
             isLoading = false
-            handleError("Registrasi gagal: \(error.localizedDescription)")
+            handleError(getFriendlyErrorMessage(for: error))
         }
     }
     
@@ -222,7 +174,7 @@ class AuthViewModel: ObservableObject {
             
         } catch {
             isLoading = false
-            handleError("Login gagal: \(error.localizedDescription)")
+            handleError(getFriendlyErrorMessage(for: error))
         }
     }
     
@@ -278,29 +230,35 @@ class AuthViewModel: ObservableObject {
     // MARK: - Translate Firebase Error
     private func getFriendlyErrorMessage(for error: Error) -> String {
         let nsError = error as NSError
+        let errorDescription = error.localizedDescription.lowercased()
         
-        // PERBAIKAN: Menghapus ".Code", cukup memanggil AuthErrorCode(rawValue:)
+        // 1. Cek kode error resmi
         if let authErrorCode = AuthErrorCode(rawValue: nsError.code) {
             switch authErrorCode {
             case .invalidEmail:
                 return "The email format is invalid."
-                // Jika suatu saat versimu protes tentang userNotFound, kamu bisa menghapusnya dan sisa invalidCredential saja
             case .userNotFound, .wrongPassword, .invalidCredential:
                 return "Invalid email or password. Please try again."
             case .networkError:
                 return "Network error. Please check your internet connection."
-            case .userDisabled:
-                return "This account has been disabled. Please contact support."
             case .tooManyRequests:
                 return "Too many failed attempts. Please try again later."
             case .emailAlreadyInUse:
                 return "This email is already registered. Please log in."
             case .weakPassword:
-                return "Your password is too weak. Please use at least 6 characters."
+                return "Your password is too weak (min. 6 characters)."
             default:
-                return error.localizedDescription
+                break
             }
         }
+        
+        // 2. Jaring pengaman jika deskripsi error mengandung kata kunci tertentu
+        if errorDescription.contains("malformed") ||
+            errorDescription.contains("expired") ||
+            errorDescription.contains("invalid") {
+            return "Invalid email or password. Please try again."
+        }
+        
         return error.localizedDescription
     }
 }
