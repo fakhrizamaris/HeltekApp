@@ -18,7 +18,7 @@ struct StopFocusIntent: AppIntent {
     static var openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult {
-        let defaults = UserDefaults(suiteName: "group.com.yipz.HeltekApp") ?? .standard
+        let defaults = UserDefaults(suiteName: "group.com.fakhri.HeltekApp") ?? .standard
         defaults.set(false, forKey: "widget.isTimerActive")
         defaults.set(0, forKey: "widget.remainingSeconds")
         defaults.set(Date().timeIntervalSince1970, forKey: "widget.timerEndDate")
@@ -62,7 +62,7 @@ struct Provider: TimelineProvider {
     }
 
     private func makeEntry(for date: Date) -> SimpleEntry {
-        let defaults = UserDefaults(suiteName: "group.com.yipz.HeltekApp") ?? .standard
+        let defaults = UserDefaults(suiteName: "group.com.fakhri.HeltekApp") ?? .standard
         let savedEndDate = Date(timeIntervalSince1970: defaults.double(forKey: "widget.timerEndDate"))
         let savedStreak = defaults.integer(forKey: "widget.currentStreak")
         let isRunning = defaults.bool(forKey: "widget.isTimerActive")

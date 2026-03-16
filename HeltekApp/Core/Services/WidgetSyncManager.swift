@@ -12,7 +12,7 @@ import WidgetKit
 #endif
 
 enum WidgetSyncKeys {
-    static let appGroupID = "group.com.yipz.HeltekApp"
+    static let appGroupID = "group.com.fakhri.HeltekApp"
     static let timerEndDate = "widget.timerEndDate"
     static let currentStreak = "widget.currentStreak"
     static let isTimerActive = "widget.isTimerActive"
