@@ -11,6 +11,7 @@ import SwiftUI
 struct ReminderView: View {
     // Menyiapkan fungsi untuk menutup halaman (dismiss)
     @Environment(\.dismiss) var dismiss
+    @Environment(\.scenePhase) var scenePhase
     @Binding var navigateToSession: Bool
     
     // Definisi Warna Kustom (Menyesuaikan palet sebelumnya)
@@ -144,6 +145,25 @@ struct ReminderView: View {
         }
         .background(bgColor.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
+        .onAppear {
+                    if UIApplication.shared.applicationState == .active {
+                        NotificationManager.shared.cancelTimerNotification()
+                        NotificationManager.shared.playImportedSound(named: "illuminate")
+                    }
+                }
+        .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        
+                        NotificationManager.shared.cancelTimerNotification()
+                        NotificationManager.shared.playImportedSound(named: "illuminate")
+                    } else if newPhase == .background {
+                        
+                        NotificationManager.shared.stopImportedSound()
+                    }
+                }
+        .onDisappear {
+                    NotificationManager.shared.stopImportedSound()
+                }
     }
 }
 

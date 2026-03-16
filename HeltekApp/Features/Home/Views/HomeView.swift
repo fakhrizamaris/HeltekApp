@@ -55,7 +55,7 @@ struct SpotlightMaskShape: Shape {
     var rect: CGRect
     var cornerRadius: CGFloat
     var padding: CGFloat
-
+    
     /// Animatable data agar SwiftUI bisa interpolasi cutout saat berpindah step.
     var animatableData: AnimatablePair<AnimatablePair<CGFloat, CGFloat>, AnimatablePair<CGFloat, CGFloat>> {
         get {
@@ -73,7 +73,7 @@ struct SpotlightMaskShape: Shape {
             )
         }
     }
-
+    
     func path(in bounds: CGRect) -> Path {
         var path = Path()
         // Seluruh layar sebagai background gelap
@@ -97,23 +97,23 @@ struct SpotlightOverlayView: View {
     let currentStepID: Int
     let frames: [Int: CGRect]
     let onNext: () -> Void
-
+    
     private var currentStep: WalkthroughStep? {
         steps.first { $0.id == currentStepID }
     }
-
+    
     private var currentFrame: CGRect {
         guard let step = currentStep, let frame = frames[step.id] else {
             return .zero
         }
         return frame
     }
-
+    
     private func tooltipAbove(screenHeight: CGFloat) -> Bool {
         // Tampilkan tooltip di bawah elemen jika elemen berada di top-half layar
         return currentFrame.midY > screenHeight / 2
     }
-
+    
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -134,7 +134,7 @@ struct SpotlightOverlayView: View {
                     .onTapGesture {
                         onNext()
                     }
-
+                    
                     // MARK: Glowing Ring Around Cutout
                     let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
                     if step.isCircle {
@@ -150,7 +150,7 @@ struct SpotlightOverlayView: View {
                             .position(x: cutoutRect.midX, y: cutoutRect.midY)
                             .animation(.spring(response: 0.45, dampingFraction: 0.78), value: currentFrame)
                     }
-
+                    
                     // MARK: Tooltip Card
                     tooltipCard(step: step, screenWidth: screenWidth, isTooltipAbove: isTooltipAbove)
                         .transition(.asymmetric(
@@ -162,34 +162,34 @@ struct SpotlightOverlayView: View {
             }
         }
     }
-
+    
     @ViewBuilder
     private func tooltipCard(step: WalkthroughStep, screenWidth: CGFloat, isTooltipAbove: Bool) -> some View {
         let cutoutRect = currentFrame.insetBy(dx: -step.padding, dy: -step.padding)
         let tooltipGap: CGFloat = 20
         let tooltipMaxWidth: CGFloat = screenWidth - 48
         let cardY: CGFloat = isTooltipAbove
-            ? cutoutRect.minY - tooltipGap - 90   // atas elemen
-            : cutoutRect.maxY + tooltipGap + 60   // bawah elemen
-
+        ? cutoutRect.minY - tooltipGap - 90   // atas elemen
+        : cutoutRect.maxY + tooltipGap + 60   // bawah elemen
+        
         VStack(spacing: 12) {
             // Arrow indicator pointing toward elemen
             Image(systemName: isTooltipAbove ? "chevron.down" : "chevron.up")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255))
-
+            
             Text(step.title)
                 .font(.system(.headline, design: .rounded))
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-
+            
             Text(step.desc)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
-
+            
             Divider().background(Color.white.opacity(0.2))
-
+            
             // Step counter + CTA
             HStack {
                 Text("\(step.id) / 4")
@@ -240,11 +240,11 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("userName") private var userName = "User"
     @AppStorage("hasSeenWalkthrough") private var hasSeenWalkthrough = false
-
+    
     // MARK: - UI Colors
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
     let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
-
+    
     // MARK: - Timer States
     @State private var timeRemaining = 1800
     @State private var isActive = false
@@ -254,7 +254,7 @@ struct HomeView: View {
     
     // MARK: - Timer States
     let timer = Timer.publish(every: 1, on: RunLoop.main, in: .common).autoconnect()
-
+    
     // MARK: - Navigation & Sheet States
     @State private var showProfile = false
     @State private var showingBottomSheet = false
@@ -262,13 +262,13 @@ struct HomeView: View {
     @State private var navigateToSuccess = false
     @State private var navigateToSession = false
     @State private var didCompleteSession = false
-
+    
     // MARK: - Walkthrough States
     /// 0 = tidak aktif, 1–4 = step aktif
     @State private var currentWalkthroughStep = 0
     /// Menyimpan frame global tiap elemen target
     @State private var spotlightFrames: [Int: CGRect] = [:]
-
+    
     /// Definisi semua step walkthrough
     private let walkthroughSteps: [WalkthroughStep] = [
         WalkthroughStep(id: 1, title: "Your Profile",    desc: "Tap here to view and edit your profile settings.",                        isCircle: false, padding: 12),
@@ -276,28 +276,28 @@ struct HomeView: View {
         WalkthroughStep(id: 3, title: "Hatch & Evolve!", desc: "Keep your streak alive to hatch the egg and watch your pet evolve.",      isCircle: false, padding: 14),
         WalkthroughStep(id: 4, title: "Ready to Focus?", desc: "Tap here to start the timer and begin your focus session.",               isCircle: false, padding: 10),
     ]
-
+    
     // MARK: - Pet Evolution Logic
     private var daysInMonth: Int {
         Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
     }
-
+    
     private var milestones: [Int] {
         [daysInMonth / 3, (daysInMonth * 2) / 3]
     }
-
+    
     private var currentPetImage: String {
         if streakCount >= milestones[1] { return "pet_third_evo" }
         if streakCount >= milestones[0] { return "pet_second_evo" }
         return "pet_first_evo"
     }
-
+    
     private var petStatusMessage: String {
         if streakCount >= milestones[1] { return "Your pet has fully evolved! You're unstoppable." }
         if streakCount >= milestones[0] { return "Your pet is growing! Keep the streak alive." }
         return "Your pet is hatching! Keep moving."
     }
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -316,7 +316,7 @@ struct HomeView: View {
                                         Image(systemName: "person.fill")
                                             .foregroundColor(themeOrange)
                                     )
-
+                                
                                 VStack(alignment: .leading) {
                                     Text(greeting)
                                         .font(.subheadline)
@@ -326,7 +326,7 @@ struct HomeView: View {
                                         .fontWeight(.bold)
                                         .foregroundColor(.primary)
                                 }
-
+                                
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(.gray)
@@ -335,26 +335,26 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                         // ← Spotlight target step 1
                         .spotlightTarget(stepID: 1)
-
+                        
                         Spacer()
-
+                        
                         Button {
-                                withAnimation {
-                                    // Memanggil kembali walkthrough dari step pertama
-                                    currentWalkthroughStep = 1
-                                }
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .font(.title3)
-                                    .foregroundColor(themeOrange) // Menambahkan warna agar senada
-                                    .padding(10)
-                                    .background(Circle().fill(Color.white).shadow(radius: 1))
+                            withAnimation {
+                                // Memanggil kembali walkthrough dari step pertama
+                                currentWalkthroughStep = 1
                             }
-                            .buttonStyle(.plain)
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .font(.title3)
+                                .foregroundColor(themeOrange) // Menambahkan warna agar senada
+                                .padding(10)
+                                .background(Circle().fill(Color.white).shadow(radius: 1))
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 20)
-
+                    
                     // MARK: Content Section
                     VStack(spacing: 30) {
                         HStack {
@@ -365,7 +365,7 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 40)
-
+                        
                         // Timer Circle Button — spotlight target step 2
                         Button(action: {
                             showingBottomSheet = true
@@ -374,14 +374,14 @@ struct HomeView: View {
                                 Circle()
                                     .stroke(lightOrange, lineWidth: 15)
                                     .frame(width: 250, height: 250)
-
+                                
                                 Circle()
                                     .trim(from: 0, to: CGFloat(timeRemaining) / CGFloat(selectedMinutes > 0 ? selectedMinutes * 60 : 1800))
                                     .stroke(themeOrange, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                                     .frame(width: 260, height: 260)
                                     .rotationEffect(.degrees(-90))
                                     .animation(.easeInOut, value: timeRemaining)
-
+                                
                                 Text(timeString(from: timeRemaining))
                                     .font(.system(size: 70, weight: .bold, design: .rounded))
                                     .foregroundColor(themeOrange)
@@ -390,7 +390,7 @@ struct HomeView: View {
                         .buttonStyle(PlainButtonStyle())
                         // ← Spotlight target step 2
                         .spotlightTarget(stepID: 2)
-
+                        
                         Text("Time to stand up and stretch those legs!")
                             .font(.body)
                             .fontWeight(.semibold)
@@ -399,7 +399,7 @@ struct HomeView: View {
                             .padding(.horizontal, 40)
                             .padding(.vertical, 20)
                     }
-
+                    
                     // MARK: Streak Card — spotlight target step 3
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 15) {
@@ -410,33 +410,33 @@ struct HomeView: View {
                                     .frame(width: 50, height: 50)
                                     .foregroundColor(themeOrange)
                                     .animation(.spring(), value: currentPetImage)
-                                    
+                                
                             }
-
+                            
                             VStack(alignment: .leading) {
                                 Text("CURRENT STREAK")
                                     .font(.caption2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.gray)
-
+                                
                                 GeometryReader { geo in
                                     let circleSize: CGFloat = 16
                                     ZStack(alignment: .leading) {
                                         Capsule()
                                             .fill(Color(.systemGray6))
                                             .frame(height: 8)
-
+                                        
                                         Capsule()
                                             .fill(themeOrange)
                                             .frame(width: min(geo.size.width, geo.size.width * CGFloat(streakCount) / CGFloat(daysInMonth)), height: 8)
-
+                                        
                                         ForEach(milestones, id: \.self) { milestone in
                                             VStack(spacing: 2) {
                                                 Circle()
                                                     .fill(streakCount >= milestone ? themeOrange : Color(.systemGray5))
                                                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                                     .frame(width: circleSize, height: circleSize)
-
+                                                
                                                 Text("\(milestone)")
                                                     .font(.system(size: 8, weight: .bold))
                                                     .foregroundColor(streakCount >= milestone ? themeOrange : .gray)
@@ -451,14 +451,14 @@ struct HomeView: View {
                                 }
                                 .frame(height: 16)
                             }
-
+                            
                             VStack(alignment: .trailing) {
                                 Text("\(streakCount) Days")
                                     .font(.title3)
                                     .fontWeight(.black)
                             }
                         }
-
+                        
                         Text(petStatusMessage)
                             .font(.caption)
                             .foregroundColor(themeOrange)
@@ -474,7 +474,7 @@ struct HomeView: View {
                     .padding(.horizontal, 24)
                     // ← Spotlight target step 3
                     .spotlightTarget(stepID: 3)
-
+                    
                     // MARK: Start Button — spotlight target step 4
                     Button(action: {
                         if isActive {
@@ -489,6 +489,7 @@ struct HomeView: View {
                             isActive = true
                             isCountdownPaused = false
                             timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                            
                             NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
                             let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
                             LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
@@ -510,10 +511,10 @@ struct HomeView: View {
                     .padding(.vertical, 30)
                     // ← Spotlight target step 4
                     .spotlightTarget(stepID: 4)
-
+                    
                 } // VStack utama
                 .background(Color(white: 0.98).ignoresSafeArea())
-
+                
                 // MARK: - Spotlight Overlay
                 if currentWalkthroughStep > 0 {
                     SpotlightOverlayView(
@@ -527,7 +528,7 @@ struct HomeView: View {
                     .transition(.opacity)
                     .animation(.easeInOut(duration: 0.25), value: currentWalkthroughStep)
                 }
-
+                
             } // ZStack
             // Kumpulkan semua frame dari PreferenceKey
             .onPreferenceChange(SpotlightFrameKey.self) { frames in
@@ -538,7 +539,7 @@ struct HomeView: View {
                 await loadStreakCount()
                 applySharedWidgetStateIfNeeded()
                 syncWidgetState(forceReload: true)
-
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     if !hasSeenWalkthrough {
                         withAnimation { currentWalkthroughStep = 1 }
@@ -558,37 +559,40 @@ struct HomeView: View {
                 ProfileView()
             }
             .navigationDestination(isPresented: $navigateToSuccess) {
-                ReminderView(navigateToSession: $navigateToSession)
-                    .onDisappear {
-                        DispatchQueue.main.async {
-                            if isActive && !navigateToSession {
-                                resetTimerAndResume()
-                            }
+                            ReminderView(navigateToSession: $navigateToSession)
+                                .onDisappear {
+                                    DispatchQueue.main.async {
+                                        if !navigateToSession {
+                                            resetTimerAndResume()
+                                        }
+                                    }
+                                }
                         }
-                    }
-            }
             .navigationDestination(isPresented: $navigateToSession) {
                 ExerciseSessionView(didCompleteSession: $didCompleteSession)
             }
             .onReceive(timer) { _ in
-                applySharedWidgetStateIfNeeded()
-                guard isActive, !isCountdownPaused else { return }
-                if let endDate = timerEndDate {
-                    timeRemaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
-                } else {
-                    timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
-                }
-                syncWidgetState()
-                if timeRemaining <= 0 {
-                    isCountdownPaused = true
-                    timerEndDate = nil
-                    NotificationManager.shared.cancelTimerNotification()
-                    NotificationManager.shared.playImportedSound(named: "pikachu", )
-                    LiveActivityManager.shared.end()
-                    syncWidgetState(forceReload: true)
-                    navigateToSuccess = true
-                }
-            }
+                            applySharedWidgetStateIfNeeded()
+                            guard isActive, !isCountdownPaused else { return }
+                            
+                            if let endDate = timerEndDate {
+                                timeRemaining = max(0, Int(endDate.timeIntervalSinceNow.rounded(.down)))
+                            } else {
+                                timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                            }
+                            syncWidgetState()
+                            
+                            if timeRemaining <= 0 {
+                                isCountdownPaused = true
+                                timerEndDate = nil
+                                
+                                LiveActivityManager.shared.end()
+                                syncWidgetState(forceReload: true)
+                                
+                                navigateToSuccess = true
+                                
+                            }
+                        }
             .onReceive(NotificationCenter.default.publisher(for: .widgetStopTimerRequested)) { _ in
                 guard isActive else { return }
                 isActive = false
@@ -612,7 +616,7 @@ struct HomeView: View {
             }
         } // NavigationStack
     }
-
+    
     // MARK: - Walkthrough Navigation
     private func nextWalkthroughStep() {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
@@ -624,7 +628,7 @@ struct HomeView: View {
             }
         }
     }
-
+    
     // MARK: - Helper Computed Properties
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -635,13 +639,13 @@ struct HomeView: View {
         default:      return "Good Night,"
         }
     }
-
+    
     func timeString(from totalSeconds: Int) -> String {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
-
+    
     @MainActor
     private func loadStreakCount() async {
         do {
@@ -650,22 +654,22 @@ struct HomeView: View {
             print("❌ Failed to load streakCount: \(error.localizedDescription)")
         }
     }
-
+    
     private func resetTimerAndResume() {
         timeRemaining = selectedMinutes * 60
+        isActive = true
         isCountdownPaused = false
         navigateToSuccess = false
         navigateToSession = false
         didCompleteSession = false
-        if isActive {
-            timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
-            NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
-            let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
-            LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
-        }
-        syncWidgetState(forceReload: true)
+        timerEndDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                NotificationManager.shared.scheduleTimerNotification(seconds: timeRemaining)
+                let endDate = Date().addingTimeInterval(TimeInterval(timeRemaining))
+                LiveActivityManager.shared.start(remainingSeconds: timeRemaining, endDate: endDate, title: "Next Movement")
+                
+                syncWidgetState(forceReload: true)
     }
-
+    
     private func syncWidgetState(forceReload: Bool = false) {
         WidgetSyncManager.shared.sync(
             remainingSeconds: timeRemaining,
@@ -676,13 +680,13 @@ struct HomeView: View {
             forceReload: forceReload
         )
     }
-
+    
     private func applySharedWidgetStateIfNeeded() {
         guard let defaults = UserDefaults(suiteName: WidgetSyncKeys.appGroupID) else { return }
         let isWidgetTimerActive = defaults.bool(forKey: WidgetSyncKeys.isTimerActive)
         let stopRequested = defaults.bool(forKey: WidgetSyncKeys.stopRequested)
         guard (!isWidgetTimerActive || stopRequested), isActive else { return }
-
+        
         isActive = false
         isCountdownPaused = false
         timeRemaining = selectedMinutes * 60
@@ -700,23 +704,23 @@ struct ReminderSheetView: View {
     @Binding var isPresented: Bool
     @Binding var selectedMinutes: Int
     @Binding var timeRemaining: Int
-
+    
     let themeOrange = Color(.sRGB, red: 242/255, green: 110/255, blue: 60/255)
     let lightOrange = Color(.sRGB, red: 255/255, green: 245/255, blue: 240/255)
     let intervalOptions = Array(stride(from: 1, through: 120, by: 1))
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Set Reminder Interval")
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(.top, 20)
-
+            
             Text("Choose how often you want to be reminded\nto move")
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-
+            
             Picker("Interval", selection: $selectedMinutes) {
                 ForEach(intervalOptions, id: \.self) { minute in
                     Text("\(minute) min").tag(minute)
@@ -724,7 +728,7 @@ struct ReminderSheetView: View {
             }
             .pickerStyle(.wheel)
             .frame(height: 150)
-
+            
             Button(action: {
                 timeRemaining = selectedMinutes * 60
                 isPresented = false
@@ -738,7 +742,7 @@ struct ReminderSheetView: View {
                     .cornerRadius(15)
             }
             .padding(.horizontal, 24)
-
+            
             Button(action: {
                 isPresented = false
             }) {
